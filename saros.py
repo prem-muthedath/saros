@@ -6,22 +6,22 @@
 class Documents:
     def __init__(self):
         self.docs = {
-            "GE00-1": [("name", "GE00"), ("rev", 1), ("prev", 0), ("last", 3), ("content", "i am GE00-1")],
-            "GE00-2": [("name", "GE00"), ("rev", 2), ("prev", 1), ("last", 3), ("content", "i am GE00-2")],
-            "GE00-3": [("name", "GE00"), ("rev", 3), ("prev", 2), ("last", 3), ("content", "i am GE00-3")],
-            "GE00-4": [("name", "GE00"), ("rev", 4), ("prev", 0), ("last", 6), ("content", "i am GE00-4")],
-            "GE00-5": [("name", "GE00"), ("rev", 5), ("prev", 4), ("last", 6), ("content", "i am GE00-5")],
-            "GE00-6": [("name", "GE00"), ("rev", 6), ("prev", 5), ("last", 6), ("content", "i am GE00-6")],
-            "GE01-1": [("name", "GE01"), ("rev", 1), ("prev", 0), ("last", 2), ("content", "i am GE01-1")],
-            "GE01-2": [("name", "GE01"), ("rev", 2), ("prev", 1), ("last", 2), ("content", "i am GE01-2")],
-            "GE02-1": [("name", "GE02"), ("rev", 1), ("prev", 0), ("last", 4), ("content", "i am GE02-1")],
-            "GE02-2": [("name", "GE02"), ("rev", 2), ("prev", 1), ("last", 4), ("content", "i am GE02-2")],
-            "GE02-3": [("name", "GE02"), ("rev", 3), ("prev", 2), ("last", 4), ("content", "i am GE02-3")],
-            "GE02-4": [("name", "GE02"), ("rev", 4), ("prev", 3), ("last", 4), ("content", "i am GE02-4")],
-            "GE02-5": [("name", "GE02"), ("rev", 5), ("prev", 0), ("last", 7), ("content", "i am GE02-5")],
-            "GE02-6": [("name", "GE02"), ("rev", 6), ("prev", 5), ("last", 7), ("content", "i am GE02-6")],
-            "GE02-7": [("name", "GE02"), ("rev", 7), ("prev", 6), ("last", 7), ("content", "i am GE02-7")],
-            "GE03-1": [("name", "GE03"), ("rev", 1), ("prev", 0), ("last", 1), ("content", "i am GE03-1")]
+            "JE00-1": [("name", "JE00"), ("rev", 1), ("prev", 0), ("last", 3), ("content", "i am JE00-1")],
+            "JE00-2": [("name", "JE00"), ("rev", 2), ("prev", 1), ("last", 3), ("content", "i am JE00-2")],
+            "JE00-3": [("name", "JE00"), ("rev", 3), ("prev", 2), ("last", 3), ("content", "i am JE00-3")],
+            "JE00-4": [("name", "JE00"), ("rev", 4), ("prev", 0), ("last", 6), ("content", "i am JE00-4")],
+            "JE00-5": [("name", "JE00"), ("rev", 5), ("prev", 4), ("last", 6), ("content", "i am JE00-5")],
+            "JE00-6": [("name", "JE00"), ("rev", 6), ("prev", 5), ("last", 6), ("content", "i am JE00-6")],
+            "JE01-1": [("name", "JE01"), ("rev", 1), ("prev", 0), ("last", 2), ("content", "i am JE01-1")],
+            "JE01-2": [("name", "JE01"), ("rev", 2), ("prev", 1), ("last", 2), ("content", "i am JE01-2")],
+            "JE02-1": [("name", "JE02"), ("rev", 1), ("prev", 0), ("last", 4), ("content", "i am JE02-1")],
+            "JE02-2": [("name", "JE02"), ("rev", 2), ("prev", 1), ("last", 4), ("content", "i am JE02-2")],
+            "JE02-3": [("name", "JE02"), ("rev", 3), ("prev", 2), ("last", 4), ("content", "i am JE02-3")],
+            "JE02-4": [("name", "JE02"), ("rev", 4), ("prev", 3), ("last", 4), ("content", "i am JE02-4")],
+            "JE02-5": [("name", "JE02"), ("rev", 5), ("prev", 0), ("last", 7), ("content", "i am JE02-5")],
+            "JE02-6": [("name", "JE02"), ("rev", 6), ("prev", 5), ("last", 7), ("content", "i am JE02-6")],
+            "JE02-7": [("name", "JE02"), ("rev", 7), ("prev", 6), ("last", 7), ("content", "i am JE02-7")],
+            "JE03-1": [("name", "JE03"), ("rev", 1), ("prev", 0), ("last", 1), ("content", "i am JE03-1")]
         }
         self.doc_name=""
 
@@ -130,7 +130,6 @@ class DocRevisions:
             self.me["prev"]=rev_chains[keys[0]][0]
             self.me["last"]=keys[0]
         docs.update_rev_link(self.me["rev"], self)
-
 
     def update(self, my_xml):
         for index, each in enumerate(my_xml):
