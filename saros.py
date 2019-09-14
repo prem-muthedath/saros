@@ -28,7 +28,7 @@ class Documents:
     def link_revs(self):
         for each in self.doc_names():
             self.doc_name=each
-            DocRevisions().link(self.last_revs(), self)
+            DocRevisionChains().link(self.last_revs(), self)
         return self.to_str()
 
     def doc_names(self):
@@ -54,7 +54,7 @@ class Documents:
             val+=each + ": " + str(self.docs[each]) + "\n"
         return val
 
-    def update_rev_link(self, doc_rev, doc_revs):
+    def update_rev_link(self, doc_rev, doc_rev_chains):
         doc_id=self.doc_name + "-" + str(doc_rev)
         doc_xml= [
             "<id>" + doc_id + "</id>",
@@ -64,7 +64,7 @@ class Documents:
             "<last>" + str(self.docs[doc_id][3][1]) + "</last>",
             "<content>" + self.docs[doc_id][4][1] + "</content>"
         ]
-        doc_revs.update(doc_xml)
+        doc_rev_chains.update(doc_xml)
         self.load(doc_xml)
         self.update_last_rev(doc_id)
 
@@ -99,7 +99,7 @@ class Documents:
                 self.docs[each][3] = ("last", last_rev)
 
 
-class DocRevisions:
+class DocRevisionChains:
     def __init__(self):
         self.me = { "rev": -1, "prev": -1, "last": -1 }
 
@@ -118,17 +118,17 @@ class DocRevisions:
             raise RuntimeError("> 2 rev chains found")
         if len(rev_chains) < 2:
             return    # no broken links, so skip
-        keys=rev_chains.keys()
-        for key in keys:
-            rev_chains[key].sort()
-        if rev_chains[keys[0]] < rev_chains[keys[1]]:
-            self.me["rev"]=rev_chains[keys[1]][0]
-            self.me["prev"]=rev_chains[keys[0]][-1]
-            self.me["last"]=keys[1]
-        elif rev_chains[keys[1]] < rev_chains[keys[0]]:
-            self.me["rev"]=rev_chains[keys[1]][-1]
-            self.me["prev"]=rev_chains[keys[0]][0]
-            self.me["last"]=keys[0]
+        lasts=rev_chains.keys()
+        for last in lasts:
+            rev_chains[last].sort()
+        if rev_chains[lasts[0]] < rev_chains[lasts[1]]:
+            self.me["rev"]=rev_chains[lasts[1]][0]
+            self.me["prev"]=rev_chains[lasts[0]][-1]
+            self.me["last"]=lasts[1]
+        elif rev_chains[lasts[1]] < rev_chains[lasts[0]]:
+            self.me["rev"]=rev_chains[lasts[1]][-1]
+            self.me["prev"]=rev_chains[lasts[0]][0]
+            self.me["last"]=lasts[0]
         docs.update_rev_link(self.me["rev"], self)
 
     def update(self, my_xml):
