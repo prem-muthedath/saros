@@ -104,10 +104,10 @@ class DocRevisionChains:
         self.me = { "rev": -1, "prev": -1, "last": -1 }
 
     def link(self, last_revs, docs):
-       # last_revs = [ (rev, last), .., (rev, last) ]
-       # rev_chains = { last1: [rev, rev, .., rev],
-       #                last2: [rev, rev, .., rev] }
-       # algorithm groups revisions by the last revision they point to
+        # last_revs = [ (rev, last), .., (rev, last) ]
+        # rev_chains = { last1: [rev, rev, .., rev],
+        #                last2: [rev, rev, .., rev] }
+        # algorithm groups revisions by the last revision they point to
         rev_chains={}
         for each in last_revs:
             if each[1] not in rev_chains:
@@ -118,17 +118,12 @@ class DocRevisionChains:
             raise RuntimeError("> 2 rev chains found")
         if len(rev_chains) < 2:
             return    # no broken links, so skip
-        lasts=rev_chains.keys()
+        lasts=sorted(rev_chains)
         for last in lasts:
             rev_chains[last].sort()
-        if rev_chains[lasts[0]] < rev_chains[lasts[1]]:
-            self.me["rev"]=rev_chains[lasts[1]][0]
-            self.me["prev"]=rev_chains[lasts[0]][-1]
-            self.me["last"]=lasts[1]
-        elif rev_chains[lasts[1]] < rev_chains[lasts[0]]:
-            self.me["rev"]=rev_chains[lasts[1]][-1]
-            self.me["prev"]=rev_chains[lasts[0]][0]
-            self.me["last"]=lasts[0]
+        self.me["rev"]=rev_chains[lasts[1]][0]
+        self.me["prev"]=rev_chains[lasts[0]][-1]
+        self.me["last"]=lasts[1]
         docs.update_rev_link(self.me["rev"], self)
 
     def update(self, my_xml):
