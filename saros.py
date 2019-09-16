@@ -3,7 +3,7 @@
 # Prem: this code, written in python, links document revisions in saros, a
 # document repository
 
-class Documents:
+class Saros:
     def __init__(self):
         self.docs = {
             "JE00-1": [("name", "JE00"), ("rev", 1), ("prev", 0), ("last", 3), ("content", "i am JE00-1")],
@@ -12,6 +12,8 @@ class Documents:
             "JE00-4": [("name", "JE00"), ("rev", 4), ("prev", 0), ("last", 6), ("content", "i am JE00-4")],
             "JE00-5": [("name", "JE00"), ("rev", 5), ("prev", 4), ("last", 6), ("content", "i am JE00-5")],
             "JE00-6": [("name", "JE00"), ("rev", 6), ("prev", 5), ("last", 6), ("content", "i am JE00-6")],
+            "JE00-7": [("name", "JE00"), ("rev", 7), ("prev", 0), ("last", 8), ("content", "i am JE00-7")],
+            "JE00-8": [("name", "JE00"), ("rev", 8), ("prev", 7), ("last", 8), ("content", "i am JE00-8")],
             "JE01-1": [("name", "JE01"), ("rev", 1), ("prev", 0), ("last", 2), ("content", "i am JE01-1")],
             "JE01-2": [("name", "JE01"), ("rev", 2), ("prev", 1), ("last", 2), ("content", "i am JE01-2")],
             "JE02-1": [("name", "JE02"), ("rev", 1), ("prev", 0), ("last", 4), ("content", "i am JE02-1")],
@@ -26,6 +28,7 @@ class Documents:
         self.doc_name=""
 
     def link_revs(self):
+        print("BEFORE: \n" + self.to_str())
         for each in self.doc_names():
             self.doc_name=each
             DocRevisionChains().link(self.last_revs(), self)
@@ -33,18 +36,18 @@ class Documents:
 
     def doc_names(self):
         names=[]
-        for each in self.docs:
-            name=self.docs[each][0][1]
+        for doc_id in self.docs:
+            name=self.fetch(doc_id, "name")
             if name not in names:
                 names.append(name)
         return names
 
     def last_revs(self):
         last_revs=[]
-        for key in self.docs:
-            if self.doc_name in key:
-                doc_rev=self.docs[key][1][1]
-                last_rev=self.docs[key][3][1]
+        for doc_id in self.docs:
+            if self.doc_name in doc_id:
+                doc_rev=self.fetch(doc_id, "rev")
+                last_rev=self.fetch(doc_id, "last")
                 last_revs.append((doc_rev, last_rev))
         return last_revs
 
@@ -54,19 +57,26 @@ class Documents:
             val+=each + ": " + str(self.docs[each]) + "\n"
         return val
 
-    def update_rev_link(self, doc_rev, doc_rev_chains):
-        doc_id=self.doc_name + "-" + str(doc_rev)
-        doc_xml= [
+    def update_rev_link(self, doc_revs, doc_rev_chains):
+        doc_id=""
+        doc_xmls=[]
+        for doc_rev in doc_revs:
+            doc_id=self.doc_name + "-" + str(doc_rev)
+            doc_xmls.append(self.doc_xml(doc_id))
+        doc_rev_chains.update(doc_xmls)
+        for doc_xml in doc_xmls:
+            self.load(doc_xml)
+        self.update_last_rev(doc_id)
+
+    def doc_xml(self, doc_id):
+        return [
             "<id>" + doc_id + "</id>",
             "<name>" + self.doc_name + "</name>",
-            "<rev>" + str(self.docs[doc_id][1][1]) + "</rev>",
-            "<prev>" + str(self.docs[doc_id][2][1]) + "</prev>",
-            "<last>" + str(self.docs[doc_id][3][1]) + "</last>",
-            "<content>" + self.docs[doc_id][4][1] + "</content>"
+            "<rev>" + str(self.fetch(doc_id, "rev")) + "</rev>",
+            "<prev>" + str(self.fetch(doc_id, "prev")) + "</prev>",
+            "<last>" + str(self.fetch(doc_id, "last")) + "</last>",
+            "<content>" + self.fetch(doc_id, "content") + "</content>"
         ]
-        doc_rev_chains.update(doc_xml)
-        self.load(doc_xml)
-        self.update_last_rev(doc_id)
 
     def load(self, doc_xml):
         doc_id=""
@@ -93,50 +103,86 @@ class Documents:
         return xml_str[start:end]
 
     def update_last_rev(self, doc_id):
-        last_rev=self.docs[doc_id][3][1]
-        for each in self.docs:
-            if each != doc_id and each.startswith(self.doc_name):
-                self.docs[each][3] = ("last", last_rev)
+        last_rev=self.fetch(doc_id, "last")
+        for _id in self.docs:
+            if _id!= doc_id and _id.startswith(self.doc_name):
+                self.put(_id, "last", last_rev)
+
+    def fetch(self, doc_id, col):
+        doc=self.docs[doc_id]
+        for (_col, _val) in doc:
+            if _col == col: return _val
+        raise RuntimeError("fetch failure for doc_id: " + \
+                            doc_id + " col: " + col + " not found")
+
+    def put(self, doc_id, col, val):
+        doc=self.docs[doc_id]
+        for index, (_col, _val) in enumerate(doc):
+            if _col == col:
+                doc[index]=(col, val)
+                return
+        raise RuntimeError("put failure for doc_id: " + doc_id + \
+                " col: " + col + " not found")
 
 
 class DocRevisionChains:
     def __init__(self):
-        self.me = { "rev": -1, "prev": -1, "last": -1 }
+        # self.broken_links = { rev: (prev, last) }
+        self.broken_links = {}
 
-    def link(self, last_revs, docs):
+    def link(self, last_revs, saros):
         # last_revs = [ (rev, last), .., (rev, last) ]
         # rev_chains = { last1: [rev, rev, .., rev],
         #                last2: [rev, rev, .., rev] }
         # algorithm groups revisions by the last revision they point to
         rev_chains={}
-        for each in last_revs:
-            if each[1] not in rev_chains:
-                rev_chains[each[1]]=[each[0]]
+        for (rev, last) in last_revs:
+            if last not in rev_chains:
+                rev_chains[last]=[rev]
             else:
-                rev_chains[each[1]].append(each[0])
-        if len(rev_chains) > 2:
-            raise RuntimeError("> 2 rev chains found")
+                rev_chains[last].append(rev)
         if len(rev_chains) < 2:
             return    # no broken links, so skip
+        self.extract_broken_links(rev_chains)
+        saros.update_rev_link(sorted(self.broken_links), self)
+
+    def extract_broken_links(self, rev_chains):
         lasts=sorted(rev_chains)
-        for last in lasts:
-            rev_chains[last].sort()
-        self.me["rev"]=rev_chains[lasts[1]][0]
-        self.me["prev"]=rev_chains[lasts[0]][-1]
-        self.me["last"]=lasts[1]
-        docs.update_rev_link(self.me["rev"], self)
+        last=lasts[-1]
+        for each in lasts:
+            rev_chains[each].sort()
+        for index, each in enumerate(lasts[1:]):
+            # scan all rev chains for broken rev links; gather & link them.
+            # broken rev link is where a rev is without a valid prev.
+            # 1st rev in a rev chain is a broken link, because it has no prev
+            # skip first rev chain, as its 1st rev can not have a prev.
+            # the 1st rev in all other rev chains is a broken rev link.
+            # index starts @ 0, but we loop from [1:], so index -> prev item.
+            prev_last=lasts[index]
+            rev=rev_chains[each][0]
+            prev=rev_chains[prev_last][-1]
+            self.broken_links[rev]=(prev, last)
 
-    def update(self, my_xml):
-        for index, each in enumerate(my_xml):
+    def update(self, xmls):
+        revs=sorted(self.broken_links)
+        for rev, xml in zip(revs, xmls):
+            self.update_link(rev, xml)
+
+    def update_link(self, rev, xml):
+        prev,last=self.fetch(rev)
+        for index, each in enumerate(xml):
             if each.startswith("<rev>"):
-                my_xml[index]="<rev>"+str(self.me["rev"])+"</rev>"
+                xml[index]="<rev>"+str(rev)+"</rev>"
             elif each.startswith("<prev>"):
-                my_xml[index]="<prev>"+str(self.me["prev"])+"</prev>"
+                xml[index]="<prev>"+str(prev)+"</prev>"
             elif each.startswith("<last>"):
-                my_xml[index]="<last>"+str(self.me["last"])+"</last>"
+                xml[index]="<last>"+str(last)+"</last>"
+
+    def fetch(self, rev):
+        return self.broken_links[rev]
 
 
 
-print(Documents().link_revs())
+print(Saros().link_revs())
  
 
