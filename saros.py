@@ -170,9 +170,7 @@ class _DocRevisionChains:
     def __update_link(self, rev, xml):
         prev,last=self.__fetch(rev)
         for index, each in enumerate(xml):
-            if each.startswith("<rev>"):
-                xml[index]="<rev>"+str(rev)+"</rev>"
-            elif each.startswith("<prev>"):
+            if each.startswith("<prev>"):
                 xml[index]="<prev>"+str(prev)+"</prev>"
             elif each.startswith("<last>"):
                 xml[index]="<last>"+str(last)+"</last>"
