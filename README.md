@@ -1,4 +1,6 @@
-# Mini program that links revisions in a document repository.
+#### Saros
+
+Mini program that links revisions in a document repository.
 
 An excercise in OO programming.  Guidelines followed:
   1. No more than one '.' per line, meaning avoid code such as:
