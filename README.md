@@ -5,7 +5,7 @@ see saros.py for detailed description of saros.
 
 this is an excercise in OO programming.  guidelines followed:
   1. no more than one '.' per line, meaning avoid code such as:
-       - in class A -> `B.some_method().do_something()`
+       - in class A -> ```B.some_method().do_something()```
        - in class A -> 
        ```
           var = B.some.method()
@@ -17,17 +17,17 @@ this is an excercise in OO programming.  guidelines followed:
        ```
           for each in some_container:
              b.some_method(each)
-           ```
+             ```
                         
   3. Avoid long chain of parameter passing:
-       - in class A -> `B.some_method(var)`
-       - in class B -> `C.another_method(var)`
+       - in class A -> ```B.some_method(var)```
+       - in class B -> ```C.another_method(var)```
       
 to run the program:
-  - `cd` to `saros` directory (where this README file is)
+  - ```cd``` to ```saros``` directory (where this README file is)
   - type below command & press ENTER:
 
-      - `python saros.py`
+      - ```python saros.py```
 
   - you should see the output on the screen
 
