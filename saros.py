@@ -247,10 +247,11 @@ class _RevisionLink:
 
     def __update(self, xml):
         for index, each in enumerate(xml):
-            if each.startswith("<prev>"):
-                xml[index]="<prev>"+str(self.__prev)+"</prev>"
-            elif each.startswith("<last>"):
-                xml[index]="<last>"+str(self.__last)+"</last>"
+            name, _ = _XmlElement(each)._parse()
+            if name == "prev":
+                xml[index]=_Attribute((name, self.__prev))._to_xml()
+            elif name == "last":
+                xml[index]=_Attribute((name, self.__last))._to_xml()
         return xml
 
 
@@ -277,10 +278,10 @@ class _XmlElement:
         if not ( self.__element.startswith("<") and \
                  self.__element.endswith(">") ):
             raise RuntimeError("invalid xml element: < or > missing")
-        f_close=self.__element.index(">")
-        s_open=self.__element.index("</")
-        name=self.__element[1:f_close]
-        val=self.__element[f_close+1:s_open]
+        fst_close=self.__element.index(">")
+        snd_open=self.__element.index("</")
+        name=self.__element[1:fst_close]
+        val=self.__element[fst_close+1:snd_open]
         return (name, self.__num(val))
 
     def __num(self, val):
