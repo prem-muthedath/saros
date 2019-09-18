@@ -103,11 +103,13 @@ class Saros:
 
 
     def link_revs(self):
+        # spins thru all docs & links all broken revision links
         for each in self.__doc_names():
             self.__doc_name=each
             _DocRevisionChains()._link(self.__last_revs(), self)
 
     def to_str(self):
+        # a string dump of all docs
         val=""
         for each in sorted(self.__docs):
             val+=each + ": " + str(self.__docs[each]) + "\n"
@@ -141,39 +143,23 @@ class Saros:
 
     def _doc_xml(self, doc_rev):
         doc_id=self.__doc_name + "-" + str(doc_rev)
-        return [
-            "<id>" + doc_id + "</id>",
-            "<name>" + self.__doc_name + "</name>",
-            "<rev>" + str(self.__fetch(doc_id, "rev")) + "</rev>",
-            "<prev>" + str(self.__fetch(doc_id, "prev")) + "</prev>",
-            "<last>" + str(self.__fetch(doc_id, "last")) + "</last>",
-            "<content>" + self.__fetch(doc_id, "content") + "</content>"
-        ]
+        xml=[ _Attribute(("id", doc_id))._to_xml() ]
+        for each in self.__docs[doc_id]:
+            xml.append(_Attribute(each)._to_xml())
+        return xml
 
     def __load(self, doc_xml):
         doc_id=""
-        vals = []
+        vals=[]
         for each in doc_xml:
-            if each.startswith("<id>"):
-                doc_id=self.__parse(each, "<id>")
-            elif each.startswith("<name>"):
-                vals.append(("name", self.__doc_name))
-            elif each.startswith("<rev>"):
-                vals.append(("rev", int(self.__parse(each, "<rev>"))))
-            elif each.startswith("<prev>"):
-                vals.append(("prev", int(self.__parse(each, "<prev>"))))
-            elif each.startswith("<last>"):
-                vals.append(("last", int(self.__parse(each, "<last>"))))
-            elif each.startswith("<content>"):
-                vals.append(("content", self.__parse(each, "<content>")))
+            name, val=_XmlElement(each)._parse()
+            if name=="id":
+                doc_id=val
+            else:
+                vals.append((name,val))
         self.__docs.pop(doc_id)
         self.__docs[doc_id]=vals
         return doc_id
-
-    def __parse(self, xml_str, xml_tag):
-        start=len(xml_tag)
-        end=len(xml_str)-(start+1)
-        return xml_str[start:end]
 
     def __update_last_rev(self, doc_id):
         last_rev=self.__fetch(doc_id, "last")
@@ -211,6 +197,8 @@ class _DocRevisionChains:
         # last_revs = [ (rev, last), .., (rev, last) ]
         # rev_chains = { last1: [rev, rev, .., rev],
         #                last2: [rev, rev, .., rev] }
+        # NOTE: last_revs is unordered either by rev or by last
+        #
         # algorithm groups revisions by their last revision.  Each group is a 
         # revision chain, & if we've > 1, we've broken revision links.
         for (rev, last) in last_revs:
@@ -218,8 +206,8 @@ class _DocRevisionChains:
                 self.__rev_chains[last]=[rev]
             else:
                self.__rev_chains[last].append(rev)
-        if len(self.__rev_chains) < 2:
-            return    # no broken links, so skip
+        if self.__no_broken_links():    # skip if no broken links
+            return
         rev_links=self.__extract_broken_links()
         saros._update_rev_links(rev_links)
 
@@ -241,6 +229,10 @@ class _DocRevisionChains:
             rev_links.append(_RevisionLink(prev, rev, each))
         return rev_links
 
+    def __no_broken_links(self):
+        # if we've broken links, we'll have > 1 rev chain
+        return len(self.__rev_chains) < 2
+
 
 class _RevisionLink:
     # represents a revision link
@@ -260,6 +252,42 @@ class _RevisionLink:
             elif each.startswith("<last>"):
                 xml[index]="<last>"+str(self.__last)+"</last>"
         return xml
+
+
+class _Attribute:
+    # represents a (name, value) pair
+    def __init__(self, (name, val)):
+        self.__name, self.__val=(name, val)
+
+    def _to_xml(self):
+        # returns an xml element
+        val=self.__val
+        if isinstance(val, int):
+            val=str(val)
+        return "<" + self.__name + ">" + val + "</" + self.__name + ">"
+
+
+class _XmlElement:
+    # represents an xml element -- from start-to-end tag
+    def __init__(self, element):
+        self.__element=element
+
+    def _parse(self):
+        # extracts (name, val)
+        if not ( self.__element.startswith("<") and \
+                 self.__element.endswith(">") ):
+            raise RuntimeError("invalid xml element: < or > missing")
+        f_close=self.__element.index(">")
+        s_open=self.__element.index("</")
+        name=self.__element[1:f_close]
+        val=self.__element[f_close+1:s_open]
+        return (name, self.__num(val))
+
+    def __num(self, val):
+        try:
+            return int(val)
+        except ValueError:
+            return val
 
 
 if __name__ == "__main__":
