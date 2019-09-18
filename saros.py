@@ -75,8 +75,8 @@
 
 
 class Saros:
-    # this class models Saros document repository.  it is the only public class 
-    # in this module. it works with a private class to link document revisions.
+    # this class models Saros document repository.  the only public class in 
+    # this module, it works with private classes to link document revisions.
     def __init__(self):
         # self_docs = { doc_id: [ ("name", val), ("rev", val), ("prev", val), ("last", val), ("content", val) ] }
         self.__docs = {
@@ -262,10 +262,12 @@ class _Attribute:
 
     def _to_xml(self):
         # returns an xml element
-        val=self.__val
-        if isinstance(val, int):
-            val=str(val)
-        return "<" + self.__name + ">" + val + "</" + self.__name + ">"
+        return "<" + self.__name + ">" + self.__good_val() + "</" + self.__name + ">"
+
+    def __good_val(self):
+        if isinstance(self.__val, int):
+            return str(self.__val)
+        return self.__val
 
 
 class _XmlElement:
@@ -278,11 +280,22 @@ class _XmlElement:
         if not ( self.__element.startswith("<") and \
                  self.__element.endswith(">") ):
             raise RuntimeError("invalid xml element: < or > missing")
-        fst_close=self.__element.index(">")
-        snd_open=self.__element.index("</")
-        name=self.__element[1:fst_close]
-        val=self.__element[fst_close+1:snd_open]
-        return (name, self.__num(val))
+        return (self.__name(), self.__good_val())
+
+    def __name(self):
+        # "<" is the first one, so we skip it & get substring from 1:
+        return self.__element[1:self.__fst_close()]
+
+    def __good_val(self):
+        # we extract substring after ">", so add 1 to __fst_close()
+        val=self.__element[self.__fst_close()+1:self.__snd_open()]
+        return self.__num(val)
+
+    def __fst_close(self):
+        return self.__element.index(">")
+
+    def __snd_open(self):
+        return self.__element.index("</")
 
     def __num(self, val):
         try:
