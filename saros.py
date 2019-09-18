@@ -78,7 +78,7 @@ class Saros:
     # this class models Saros document repository.  it is the only public class 
     # in this module. it works with a private class to link document revisions.
     def __init__(self):
-        # self_docs = { doc_id: [ ("name", val), ("rev", val), ("prev", val), ("content", val) ] }
+        # self_docs = { doc_id: [ ("name", val), ("rev", val), ("prev", val), ("last", val), ("content", val) ] }
         self.__docs = {
             "JE00-1": [("name", "JE00"), ("rev", 1), ("prev", 0), ("last", 3), ("content", "i am JE00-1")],
             "JE00-2": [("name", "JE00"), ("rev", 2), ("prev", 1), ("last", 3), ("content", "i am JE00-2")],
@@ -131,18 +131,16 @@ class Saros:
                 last_revs.append((doc_rev, last_rev))
         return last_revs
 
-    def _update_rev_links(self, doc_revs, doc_rev_chains):
-        doc_id=""
+    def _update_rev_links(self, rev_links):
         doc_xmls=[]
-        for doc_rev in doc_revs:
-            doc_id=self.__doc_name + "-" + str(doc_rev)
-            doc_xmls.append(self.__doc_xml(doc_id))
-        doc_rev_chains._update(doc_xmls)
+        for rev_link in rev_links:
+            doc_xmls.append(rev_link._to_xml(self))
         for doc_xml in doc_xmls:
-            self.__load(doc_xml)
-        self.__update_last_rev(doc_id)
+            doc_id=self.__load(doc_xml)
+            self.__update_last_rev(doc_id)
 
-    def __doc_xml(self, doc_id):
+    def _doc_xml(self, doc_rev):
+        doc_id=self.__doc_name + "-" + str(doc_rev)
         return [
             "<id>" + doc_id + "</id>",
             "<name>" + self.__doc_name + "</name>",
@@ -170,6 +168,7 @@ class Saros:
                 vals.append(("content", self.__parse(each, "<content>")))
         self.__docs.pop(doc_id)
         self.__docs[doc_id]=vals
+        return doc_id
 
     def __parse(self, xml_str, xml_tag):
         start=len(xml_tag)
@@ -203,8 +202,8 @@ class _DocRevisionChains:
     # builds doc revision chains, spots broken revision links, & works with 
     # Saros to link them.
     def __init__(self):
-        # self.__broken_links = { rev: (prev, last) }
-        self.__broken_links = {}
+        # self.__rev_chains = { last: [rev, rev, ..., rev ] }
+        self.__rev_chains = {}
 
     def _link(self, last_revs, saros):
         # last_revs = [ (rev, last), .., (rev, last) ]
@@ -212,22 +211,22 @@ class _DocRevisionChains:
         #                last2: [rev, rev, .., rev] }
         # algorithm groups revisions by their last revision.  Each group is a 
         # revision chain, & if we've > 1, we've broken revision links.
-        rev_chains={}
         for (rev, last) in last_revs:
-            if last not in rev_chains:
-                rev_chains[last]=[rev]
+            if last not in self.__rev_chains:
+                self.__rev_chains[last]=[rev]
             else:
-                rev_chains[last].append(rev)
-        if len(rev_chains) < 2:
+               self.__rev_chains[last].append(rev)
+        if len(self.__rev_chains) < 2:
             return    # no broken links, so skip
-        self.__extract_broken_links(rev_chains)
-        saros._update_rev_links(sorted(self.__broken_links), self)
+        rev_links=self.__extract_broken_links()
+        saros._update_rev_links(rev_links)
 
-    def __extract_broken_links(self, rev_chains):
-        lasts=sorted(rev_chains)
+    def __extract_broken_links(self):
+        rev_links=[]
+        lasts=sorted(self.__rev_chains)
         last=lasts[-1]
         for each in lasts:
-            rev_chains[each].sort()
+            self.__rev_chains[each].sort()
         for index, each in enumerate(lasts[1:]):
             # scan all rev chains for broken rev links; gather & link them.
             # broken rev link is where a rev is without a valid prev.
@@ -236,25 +235,30 @@ class _DocRevisionChains:
             # the 1st rev in all other rev chains is a broken rev link.
             # index starts @ 0, but we loop from [1:], so index -> prev item.
             prev_last=lasts[index]
-            rev=rev_chains[each][0]
-            prev=rev_chains[prev_last][-1]
-            self.__broken_links[rev]=(prev, last)
+            rev=self.__rev_chains[each][0]
+            prev=self.__rev_chains[prev_last][-1]
+            rev_links.append(_RevisionLink(prev, rev, last))
+        return rev_links
 
-    def _update(self, xmls):
-        revs=sorted(self.__broken_links)
-        for rev, xml in zip(revs, xmls):
-            self.__update_link(rev, xml)
 
-    def __update_link(self, rev, xml):
-        prev,last=self.__fetch(rev)
+class _RevisionLink:
+    # represents a revision link
+    def __init__(self, prev, rev, last):
+        self.__prev=prev
+        self.__rev=rev
+        self.__last=last
+
+    def _to_xml(self, saros):
+        xml=saros._doc_xml(self.__rev)
+        return self.__update(xml)
+
+    def __update(self, xml):
         for index, each in enumerate(xml):
             if each.startswith("<prev>"):
-                xml[index]="<prev>"+str(prev)+"</prev>"
+                xml[index]="<prev>"+str(self.__prev)+"</prev>"
             elif each.startswith("<last>"):
-                xml[index]="<last>"+str(last)+"</last>"
-
-    def __fetch(self, rev):
-        return self.__broken_links[rev]
+                xml[index]="<last>"+str(self.__last)+"</last>"
+        return xml
 
 
 if __name__ == "__main__":
