@@ -177,8 +177,10 @@ class Saros:
 
     def __update_last_rev(self, doc_id):
         last_rev=self.__fetch(doc_id, "last")
+        rev=self.__fetch(doc_id, "rev")
         for _id in self.__docs:
-            if _id!= doc_id and _id.startswith(self.__doc_name):
+            _rev=self.__fetch(_id, "rev")
+            if _id.startswith(self.__doc_name) and _rev < rev:
                 self.__put(_id, "last", last_rev)
 
     def __fetch(self, doc_id, col):
@@ -224,7 +226,6 @@ class _DocRevisionChains:
     def __extract_broken_links(self):
         rev_links=[]
         lasts=sorted(self.__rev_chains)
-        last=lasts[-1]
         for each in lasts:
             self.__rev_chains[each].sort()
         for index, each in enumerate(lasts[1:]):
@@ -235,9 +236,9 @@ class _DocRevisionChains:
             # the 1st rev in all other rev chains is a broken rev link.
             # index starts @ 0, but we loop from [1:], so index -> prev item.
             prev_last=lasts[index]
-            rev=self.__rev_chains[each][0]
             prev=self.__rev_chains[prev_last][-1]
-            rev_links.append(_RevisionLink(prev, rev, last))
+            rev=self.__rev_chains[each][0]
+            rev_links.append(_RevisionLink(prev, rev, each))
         return rev_links
 
 
