@@ -55,12 +55,12 @@
 #       -> links don't have same "last", so we've 2 revision chains:
 #           -> for last=3 => [1, 2, 3]
 #           -> for last=7 => [4, 5, 6, 7]
-# 13. To fix the problem in (12), we must:
+# 13. To fix the problem in (12), we must (for a doc with a specific "name"):
 #       (a) spot the "rev" with broken link -> rev 4
 #       (b) determine its right "prev" value -> "prev"=3
 #       (c) determine its right "last" value -> "last"=7
 #       (d) update Saros with (a), (b), & (c)
-#       (e) Saros will then update all "rev"s "last" to same value -> "last"=7
+#       (e) when 13(d) is done, Saros updates all "rev"s whose "last" < 7 to 7
 # 14. To do 13 (a), (b), & (c) [ see example in (12) ]:
 #       -> call Saros API "last_revs()" with a doc "name" -- say, "goo"
 #       -> you get [(rev, last)] -- [(1,3),(3,3),(2,3),(5,7),(4,7),(7,7),(6,7)]
@@ -109,13 +109,14 @@ class Saros:
             _DocRevisionChains()._link(self.__last_revs(), self)
 
     def to_str(self):
-        # a string dump of all docs
+        # string dump of all docs & their `id`s
         val=""
         for each in sorted(self.__docs):
             val+=each + ": " + str(self.__docs[each]) + "\n"
         return val
 
     def __doc_names(self):
+        # list of all unique doc names
         names=[]
         for doc_id in self.__docs:
             name=self.__fetch(doc_id, "name")
@@ -124,6 +125,7 @@ class Saros:
         return names
 
     def __last_revs(self):
+        # gathers "last" for all revisions of doc named `self.__doc_name`
         # returns an unordered [ ("rev", "last") ]
         last_revs=[]
         for doc_id in self.__docs:
@@ -134,21 +136,24 @@ class Saros:
         return last_revs
 
     def _update_rev_links(self, rev_links):
+        # updates revision links in the database
         doc_xmls=[]
         for rev_link in rev_links:
             doc_xmls.append(rev_link._to_xml(self))
         for doc_xml in doc_xmls:
             doc_id=self.__load(doc_xml)
-            self.__update_last_rev(doc_id)
+            self.__update_last_revs(doc_id)
 
     def _doc_xml(self, doc_rev):
-        doc_id=self.__doc_name + "-" + str(doc_rev)
+        # xml dump of doc named `self.__doc_name` & revision `doc_rev`
+        doc_id=self.__doc_id(doc_rev)
         xml=[ _Attribute(("id", doc_id))._to_xml() ]
         for each in self.__docs[doc_id]:
             xml.append(_Attribute(each)._to_xml())
         return xml
 
     def __load(self, doc_xml):
+        # loads doc defined by `doc_xml` into the database
         doc_id=""
         vals=[]
         for each in doc_xml:
@@ -161,15 +166,22 @@ class Saros:
         self.__docs[doc_id]=vals
         return doc_id
 
-    def __update_last_rev(self, doc_id):
+    def __update_last_revs(self, doc_id):
+        # replaces "last" of all revisions of doc named `self.__doc_name` whose 
+        # "last" < last_rev (i.e., "last" of just updated revision link).
+        # doc_id -> id of doc whose revision link has just been updated.
         last_rev=self.__fetch(doc_id, "last")
-        rev=self.__fetch(doc_id, "rev")
-        for _id in self.__docs:
-            _rev=self.__fetch(_id, "rev")
-            if _id.startswith(self.__doc_name) and _rev < rev:
+        for (rev, last) in self.__last_revs():
+            _id=self.__doc_id(rev)
+            if last < last_rev and _id != doc_id:
                 self.__put(_id, "last", last_rev)
 
+    def __doc_id(self, rev):
+        # returns id of doc with name `self.__doc_name` & revision `rev`
+        return self.__doc_name + "-" + str(rev)
+
     def __fetch(self, doc_id, col):
+        # given a doc_id & col (i.e., attribute name), returns the value
         doc=self.__docs[doc_id]
         for (_col, _val) in doc:
             if _col == col: return _val
@@ -177,6 +189,7 @@ class Saros:
                             doc_id + " col: " + col + " not found")
 
     def __put(self, doc_id, col, val):
+        # updates col (i.e., attribute name) value of doc referred by `doc_id`
         doc=self.__docs[doc_id]
         for index, (_col, _val) in enumerate(doc):
             if _col == col:
@@ -194,6 +207,8 @@ class _DocRevisionChains:
         self.__rev_chains = {}
 
     def _link(self, last_revs, saros):
+        # identifies & links broken revision chains
+        #
         # last_revs = [ (rev, last), .., (rev, last) ]
         # rev_chains = { last1: [rev, rev, .., rev],
         #                last2: [rev, rev, .., rev] }
@@ -208,16 +223,17 @@ class _DocRevisionChains:
                self.__rev_chains[last].append(rev)
         if self.__no_broken_links():    # skip if no broken links
             return
-        rev_links=self.__extract_broken_links()
+        rev_links=self.__correct_rev_links()
         saros._update_rev_links(rev_links)
 
-    def __extract_broken_links(self):
+    def __correct_rev_links(self):
+        # returns correct revision links to fix broken revision chains
         rev_links=[]
         lasts=sorted(self.__rev_chains)
         for each in lasts:
             self.__rev_chains[each].sort()
         for index, each in enumerate(lasts[1:]):
-            # scan all rev chains for broken rev links; gather & link them.
+            # scan all rev chains for broken rev links & return corrected links.
             # broken rev link is where a rev is without a valid prev.
             # 1st rev in a rev chain is a broken link, because it has no prev.
             # skip first rev chain, however, as its 1st rev can not have a prev.
@@ -242,6 +258,7 @@ class _RevisionLink:
         self.__last=last
 
     def _to_xml(self, saros):
+        # returns xml dump of current doc with right revision link info
         xml=saros._doc_xml(self.__rev)
         return self.__update(xml)
 
@@ -265,6 +282,7 @@ class _Attribute:
         return "<" + self.__name + ">" + self.__good_val() + "</" + self.__name + ">"
 
     def __good_val(self):
+        # converts int to str
         if isinstance(self.__val, int):
             return str(self.__val)
         return self.__val
@@ -296,9 +314,11 @@ class _XmlElement:
         return self.__num(val)
 
     def __fst_close(self):
+        # index of first occurence of close tag symbol ">"
         return self.__element.index(">")
 
     def __snd_open(self):
+        # index of second occurence of open tag symbol "<" -- which is "</"
         return self.__element.index("</")
 
     def __num(self, val):
