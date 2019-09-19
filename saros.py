@@ -60,7 +60,7 @@
 #       (b) determine its right "prev" value -> "prev"=3
 #       (c) determine its right "last" value -> "last"=7
 #       (d) update Saros with (a), (b), & (c)
-#       (e) when 13(d) is done, Saros updates all "rev"s whose "last" < 7 to 7
+#       (e) after 13(d), Saros sets "last" of all "rev"s whose "last" < 7 to 7.
 # 14. To do 13 (a), (b), & (c) [ see example in (12) ]:
 #       -> call Saros API "last_revs()" with a doc "name" -- say, "goo"
 #       -> you get [(rev, last)] -- [(1,3),(3,3),(2,3),(5,7),(4,7),(7,7),(6,7)]
@@ -99,13 +99,13 @@ class Saros:
             "JE02-7": [("name", "JE02"), ("rev", 7), ("prev", 6), ("last", 7), ("content", "i am JE02-7")],
             "JE03-1": [("name", "JE03"), ("rev", 1), ("prev", 0), ("last", 1), ("content", "i am JE03-1")]
         }
-        self.__doc_name=""  # current document whose revisions are being linked
+        self.__current_doc_name=""  # current document whose revisions are being linked
 
 
     def link_revs(self):
-        # spins thru all docs & links all broken revision links
+        # spins thru all docs & links all unlinked revisions of each doc
         for each in self.__doc_names():
-            self.__doc_name=each
+            self.__current_doc_name=each
             _DocRevisionChains()._link(self.__last_revs(), self)
 
     def to_str(self):
@@ -125,11 +125,11 @@ class Saros:
         return names
 
     def __last_revs(self):
-        # gathers "last" for all revisions of doc named `self.__doc_name`
+        # gathers "last" for all revisions of doc `self.__current_doc_name`
         # returns an unordered [ ("rev", "last") ]
         last_revs=[]
         for doc_id in self.__docs:
-            if self.__doc_name in doc_id:
+            if self.__current_doc_name in doc_id:
                 doc_rev=self.__fetch(doc_id, "rev")
                 last_rev=self.__fetch(doc_id, "last")
                 last_revs.append((doc_rev, last_rev))
@@ -145,7 +145,7 @@ class Saros:
             self.__update_last_revs(doc_id)
 
     def _doc_xml(self, doc_rev):
-        # xml dump of doc named `self.__doc_name` & revision `doc_rev`
+        # xml dump of doc named `self.__current_doc_name`, revision `doc_rev`
         doc_id=self.__doc_id(doc_rev)
         xml=[ _Attribute(("id", doc_id))._to_xml() ]
         for each in self.__docs[doc_id]:
@@ -167,8 +167,8 @@ class Saros:
         return doc_id
 
     def __update_last_revs(self, doc_id):
-        # replaces "last" of all revisions of doc named `self.__doc_name` whose 
-        # "last" < last_rev (i.e., "last" of just updated revision link).
+        # replaces "last" for all revs of doc named `self.__current_doc_name` 
+        # whose "last" < last_rev (i.e., "last" of just updated revision link).
         # doc_id -> id of doc whose revision link has just been updated.
         last_rev=self.__fetch(doc_id, "last")
         for (rev, last) in self.__last_revs():
@@ -177,8 +177,8 @@ class Saros:
                 self.__put(_id, "last", last_rev)
 
     def __doc_id(self, rev):
-        # returns id of doc with name `self.__doc_name` & revision `rev`
-        return self.__doc_name + "-" + str(rev)
+        # returns id of doc named `self.__current_doc_name`, revision `rev`
+        return self.__current_doc_name + "-" + str(rev)
 
     def __fetch(self, doc_id, col):
         # given a doc_id & col (i.e., attribute name), returns the value
@@ -200,8 +200,8 @@ class Saros:
 
 
 class _DocRevisionChains:
-    # builds doc revision chains, spots broken revision links, & works with 
-    # Saros to link them.
+    # builds doc revision chains, spots unlinked revisions, & works with Saros 
+    # to link them.
     def __init__(self):
         # self.__rev_chains = { last: [rev, rev, ..., rev ] }
         self.__rev_chains = {}
@@ -215,7 +215,7 @@ class _DocRevisionChains:
         # NOTE: last_revs is unordered either by rev or by last
         #
         # algorithm groups revisions by their last revision.  Each group is a 
-        # revision chain, & if we've > 1, we've broken revision links.
+        # revision chain, & if we've > 1, we've broken revision chains.
         for (rev, last) in last_revs:
             if last not in self.__rev_chains:
                 self.__rev_chains[last]=[rev]
@@ -246,16 +246,16 @@ class _DocRevisionChains:
         return rev_links
 
     def __no_broken_links(self):
-        # if we've broken links, we'll have > 1 rev chain
+        # if we've broken revision links, we'll have > 1 rev chain
         return len(self.__rev_chains) < 2
 
 
 class _RevisionLink:
     # represents a revision link
     def __init__(self, prev, rev, last):
-        self.__prev=prev
-        self.__rev=rev
-        self.__last=last
+        self.__prev=prev    # "rev"'s previou revision
+        self.__rev=rev      # revision
+        self.__last=last    # last revision in the chain "rev" belongs
 
     def _to_xml(self, saros):
         # returns xml dump of current doc with right revision link info
