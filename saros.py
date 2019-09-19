@@ -273,14 +273,18 @@ class _Attribute:
 class _XmlElement:
     # represents an xml element -- from start-to-end tag
     def __init__(self, element):
+        # element = "<name>value</name>"
         self.__element=element
 
     def _parse(self):
         # extracts (name, val)
+        self.__validate();
+        return (self.__name(), self.__good_val())
+
+    def __validate(self):
         if not ( self.__element.startswith("<") and \
                  self.__element.endswith(">") ):
             raise RuntimeError("invalid xml element: < or > missing")
-        return (self.__name(), self.__good_val())
 
     def __name(self):
         # "<" is the first one, so we skip it & get substring from 1:
