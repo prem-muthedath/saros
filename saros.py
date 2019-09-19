@@ -146,7 +146,7 @@ class Saros:
 
     def _doc_xml(self, doc_rev):
         # xml dump of doc named `self.__current_doc_name`, revision `doc_rev`
-        doc_id=self.__doc_id(doc_rev)
+        doc_id=self.__current_doc_id(doc_rev)
         xml=[ _Attribute(("id", doc_id))._to_xml() ]
         for each in self.__docs[doc_id]:
             xml.append(_Attribute(each)._to_xml())
@@ -172,11 +172,11 @@ class Saros:
         # doc_id -> id of doc whose revision link has just been updated.
         last_rev=self.__fetch(doc_id, "last")
         for (rev, last) in self.__last_revs():
-            _id=self.__doc_id(rev)
+            _id=self.__current_doc_id(rev)
             if last < last_rev and _id != doc_id:
                 self.__put(_id, "last", last_rev)
 
-    def __doc_id(self, rev):
+    def __current_doc_id(self, rev):
         # returns id of doc named `self.__current_doc_name`, revision `rev`
         return self.__current_doc_name + "-" + str(rev)
 
