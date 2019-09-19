@@ -54,7 +54,7 @@
 #
 #       -> links don't have same "last", so we've 2 revision chains:
 #           -> for last=3 => [1, 2, 3]
-#           -> for last=7 => [4, 5, 6]
+#           -> for last=7 => [4, 5, 6, 7]
 # 13. To fix the problem in (12), we must:
 #       (a) spot the "rev" with broken link -> rev 4
 #       (b) determine its right "prev" value -> "prev"=3
