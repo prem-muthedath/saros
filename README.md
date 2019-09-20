@@ -1,5 +1,5 @@
 #### saros
-program that links revisions in a document repository.
+Program to link revisions in a document repository.
 
 see saros.py for detailed description of saros.
 
