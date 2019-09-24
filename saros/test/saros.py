@@ -44,6 +44,6 @@ class Test(unittest.TestCase):
 
 def run():
     suite=unittest.TestSuite()
-    suite.addTest(Test())   # we're using runTest(), so no need to mention test method name 
+    suite.addTest(Test())   # we're using runTest(), so need not pass test method name to Test()
     unittest.TextTestRunner().run(suite)
 
