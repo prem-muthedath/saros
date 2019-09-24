@@ -102,7 +102,7 @@ class Saros:
         val=""
         for (_id, _doc) in self.__db._dump():
             val+=_id + ": " + str(_doc) + "\n"
-        return val
+        return val.strip("\n")
 
     def __doc_names(self):
         # list of all unique doc names
