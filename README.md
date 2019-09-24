@@ -1,34 +1,34 @@
 #### saros
-Program to link revisions in a document repository.
+Program to link document revisions in Saros, a fictitious document repository.
 
-see saros.py for detailed description of saros.
+See `./saros/saros.py` for detailed description of Saros.
 
-this is an excercise in OO programming.  guidelines followed:
-  1. no more than one '.' per line, meaning avoid code such as:
-       - in class A -> `B.some_method().do_something()`
-       - in class A -> 
+This is an excercise in OO programming.  Guidelines followed:
+  1. No more than one '.' per line, meaning avoid code such as:
+       - in `class A` -> `B.some_method().do_something()`
+       - in `class A` -> 
        ```
           var = B.some.method()
           C.another_method(var)
         ```
                      
-  2. avoid calling some object's method in a loop with the same instance:
-       - In class A -> 
+  2. Avoid calling some object's method in a loop with the same instance:
+       - In `class A` -> 
        ```
         for each in some_container:
              b.some_method(each)
         ```
                         
   3. Avoid long chain of parameter passing:
-       - in class A -> `B.some_method(var)`
-       - in class B -> `C.another_method(var)`
+       - in `class A` -> `B.some_method(var)`
+       - in `class B` -> `C.another_method(var)`
       
-to run the program:
-  - `cd` to `saros` directory (where this README file is)
-  - type below command & press ENTER:
+To run the program:
+  - `cd` to `saros` directory (where this `README` file is)
+  - Type below command & press ENTER:
 
-      - `python saros.py`
+      - `python -m saros`
 
-  - you should see the output on the screen
+  - You should see the output on the screen
 
 
