@@ -43,16 +43,19 @@ class Test(unittest.TestCase):
         ])
 
 
-# NOTE:
-# if you wish to use unittest.main(), then:
-#   1. no need to call run() in saros.__main__.py;
-#   2. instead, in saros.__main__.py, call:
-#           unittest.main(module='saros.test.saros')
-#   3. then run python -m saros to execute runTest()
-#   4. ref: https://docs.python.org/2/library/unittest.html#unittest.main
-def run():
-    # call this method in saros.__main__.py;
-    # to execute runTest(), run python -m saros in the commandline.
+def main():
+    # calls unittest.main() to run tests.
+    # to use:
+    #   1. call this method in saros.__main__.py
+    #   2. then run `python -m saros` to execute runTest()
+    #   3. ref: https://docs.python.org/2/library/unittest.html#unittest.main
+    unittest.main(module='saros.test.saros')
+
+def suite():
+    # runs tests as test suite.
+    # to use:
+    #   1. call this method in saros.__main__.py;
+    #   2. to execute runTest(), run `python -m saros` in the commandline.
     suite=unittest.TestSuite()
     suite.addTest(Test())   # we're using runTest(), so need not pass test method name to Test()
     unittest.TextTestRunner().run(suite)

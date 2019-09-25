@@ -1,8 +1,8 @@
 #!/usr/bin/python
 
-import unittest
+from .test import saros
 
 if __name__ == "__main__":
-    unittest.main(module='saros.test.saros')
+    saros.main()
 
 
