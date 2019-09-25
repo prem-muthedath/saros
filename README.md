@@ -25,7 +25,7 @@ This is an excercise in OO programming.  Guidelines followed:
       
 To run the program:
   - `cd` to `saros` directory (where this `README` file is)
-  - Type below command & press ENTER:
+  - Type below command & press `ENTER`:
 
       - `python -m saros`
 

@@ -12,7 +12,7 @@ class _SarosDB:
     # NOTE:
     # there is no API, however, to link doc revisions; instead, clients must:
     # 1. request XML dump of a specific doc revision (i.e., doc name & revision)
-    # 2. update XML with revision link info, & send it to SarosDB to load
+    # 2. update XML with valid revision link info, & send it to SarosDB to load
     # 3. SarosDB then parses XML, & loads data
     # 4. After load, SarosDB updates "last" of all revisions of the doc whose 
     #    "last" < "last" of the just updated link.
@@ -26,7 +26,9 @@ class _SarosDB:
     #    "prev"     -> "rev" of immediate predecessor; for "rev"=1, "prev"=0
     #    "Last"     -> last "rev" in the chain "rev" belongs ~ total revisions
     #    "content"  -> doc's content
-    # 5. each row must have valid "prev" & "last" values 
+    # 5. each row should have valid "prev" & "last" values; if not, we'll have 
+    #    broken revision chains.  Saros database, however, does not enforce this 
+    #    rule, so any broken revision links must be fixed thru a data update.
     
     def __init__(self):
         # self_docs = { doc_id: [ ("name", val), ("rev", val), ("prev", val), ("last", val), ("content", val) ] }
