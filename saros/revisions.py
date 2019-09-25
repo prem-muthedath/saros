@@ -8,7 +8,7 @@ from .xml import _Attribute, _XmlElement
 
 class _DocRevisionChains:
     # represents a doc's revision chains.
-    # builds doc revision chains, spots unlinked revisions, & assembles correct 
+    # builds doc revision chains, spots unlinked revisions, & generates correct
     # revision links; works with other classes to update links in Saros.
     def __init__(self):
         # self.__rev_chains = { last: [rev, rev, ..., rev ] }
