@@ -29,66 +29,75 @@ class _SarosDB:
     # 5. each row should have valid "prev" & "last" values; if not, we'll have 
     #    broken revision chains.  Saros database, however, does not enforce this 
     #    rule, so any broken revision links must be fixed thru a data update.
+    # 6. the database -- __docs (see below) -- is modeled as a class variable, 
+    #    so that all _SarosDB instances share the same data, & database updates 
+    #    from any _SarosDB instance are available to all _SarosDB instances.
+    # 7. to make (6) work, all methods are class methods, but you can still use 
+    #    _SarosDB().method().  ref: https://pythonbasics.org/classmethod/
     
-    def __init__(self):
-        # self_docs = { doc_id: [ ("name", val), ("rev", val), ("prev", val), ("last", val), ("content", val) ] }
-        self.__docs = { # represents the database
-            "JE00-1": [("name", "JE00"), ("rev", 1), ("prev", 0), ("last", 3), ("content", "i am JE00-1")],
-            "JE00-2": [("name", "JE00"), ("rev", 2), ("prev", 1), ("last", 3), ("content", "i am JE00-2")],
-            "JE00-3": [("name", "JE00"), ("rev", 3), ("prev", 2), ("last", 3), ("content", "i am JE00-3")],
-            "JE00-4": [("name", "JE00"), ("rev", 4), ("prev", 0), ("last", 6), ("content", "i am JE00-4")],
-            "JE00-5": [("name", "JE00"), ("rev", 5), ("prev", 4), ("last", 6), ("content", "i am JE00-5")],
-            "JE00-6": [("name", "JE00"), ("rev", 6), ("prev", 5), ("last", 6), ("content", "i am JE00-6")],
-            "JE00-7": [("name", "JE00"), ("rev", 7), ("prev", 0), ("last", 8), ("content", "i am JE00-7")],
-            "JE00-8": [("name", "JE00"), ("rev", 8), ("prev", 7), ("last", 8), ("content", "i am JE00-8")],
-            "JE01-1": [("name", "JE01"), ("rev", 1), ("prev", 0), ("last", 2), ("content", "i am JE01-1")],
-            "JE01-2": [("name", "JE01"), ("rev", 2), ("prev", 1), ("last", 2), ("content", "i am JE01-2")],
-            "JE02-1": [("name", "JE02"), ("rev", 1), ("prev", 0), ("last", 4), ("content", "i am JE02-1")],
-            "JE02-2": [("name", "JE02"), ("rev", 2), ("prev", 1), ("last", 4), ("content", "i am JE02-2")],
-            "JE02-3": [("name", "JE02"), ("rev", 3), ("prev", 2), ("last", 4), ("content", "i am JE02-3")],
-            "JE02-4": [("name", "JE02"), ("rev", 4), ("prev", 3), ("last", 4), ("content", "i am JE02-4")],
-            "JE02-5": [("name", "JE02"), ("rev", 5), ("prev", 0), ("last", 7), ("content", "i am JE02-5")],
-            "JE02-6": [("name", "JE02"), ("rev", 6), ("prev", 5), ("last", 7), ("content", "i am JE02-6")],
-            "JE02-7": [("name", "JE02"), ("rev", 7), ("prev", 6), ("last", 7), ("content", "i am JE02-7")],
-            "JE03-1": [("name", "JE03"), ("rev", 1), ("prev", 0), ("last", 1), ("content", "i am JE03-1")]
-        }
+    # __docs = { doc_id: [ ("name", val), ("rev", val), ("prev", val), ("last", val), ("content", val) ] }
+    __docs = { # represents the database
+        "JE00-1": [("name", "JE00"), ("rev", 1), ("prev", 0), ("last", 3), ("content", "i am JE00-1")],
+        "JE00-2": [("name", "JE00"), ("rev", 2), ("prev", 1), ("last", 3), ("content", "i am JE00-2")],
+        "JE00-3": [("name", "JE00"), ("rev", 3), ("prev", 2), ("last", 3), ("content", "i am JE00-3")],
+        "JE00-4": [("name", "JE00"), ("rev", 4), ("prev", 0), ("last", 6), ("content", "i am JE00-4")],
+        "JE00-5": [("name", "JE00"), ("rev", 5), ("prev", 4), ("last", 6), ("content", "i am JE00-5")],
+        "JE00-6": [("name", "JE00"), ("rev", 6), ("prev", 5), ("last", 6), ("content", "i am JE00-6")],
+        "JE00-7": [("name", "JE00"), ("rev", 7), ("prev", 0), ("last", 8), ("content", "i am JE00-7")],
+        "JE00-8": [("name", "JE00"), ("rev", 8), ("prev", 7), ("last", 8), ("content", "i am JE00-8")],
+        "JE01-1": [("name", "JE01"), ("rev", 1), ("prev", 0), ("last", 2), ("content", "i am JE01-1")],
+        "JE01-2": [("name", "JE01"), ("rev", 2), ("prev", 1), ("last", 2), ("content", "i am JE01-2")],
+        "JE02-1": [("name", "JE02"), ("rev", 1), ("prev", 0), ("last", 4), ("content", "i am JE02-1")],
+        "JE02-2": [("name", "JE02"), ("rev", 2), ("prev", 1), ("last", 4), ("content", "i am JE02-2")],
+        "JE02-3": [("name", "JE02"), ("rev", 3), ("prev", 2), ("last", 4), ("content", "i am JE02-3")],
+        "JE02-4": [("name", "JE02"), ("rev", 4), ("prev", 3), ("last", 4), ("content", "i am JE02-4")],
+        "JE02-5": [("name", "JE02"), ("rev", 5), ("prev", 0), ("last", 7), ("content", "i am JE02-5")],
+        "JE02-6": [("name", "JE02"), ("rev", 6), ("prev", 5), ("last", 7), ("content", "i am JE02-6")],
+        "JE02-7": [("name", "JE02"), ("rev", 7), ("prev", 6), ("last", 7), ("content", "i am JE02-7")],
+        "JE03-1": [("name", "JE03"), ("rev", 1), ("prev", 0), ("last", 1), ("content", "i am JE03-1")]
+    }
 
-    def _dump(self):
+    @classmethod
+    def _dump(cls):
         # dump of all docs & their `id`s, sorted by `id`
         dump=[]
-        for each in sorted(self.__docs):
-            dump.append((each, self.__docs[each]))
+        for each in sorted(cls.__docs):
+            dump.append((each, cls.__docs[each]))
         return dump 
 
-    def _doc_names(self):
+    @classmethod
+    def _doc_names(cls):
         # list of all unique doc names
         names=[]
-        for doc_id in self.__docs:
-            name=self.__fetch(doc_id, "name")
+        for doc_id in cls.__docs:
+            name=cls.__fetch(doc_id, "name")
             if name not in names:
                 names.append(name)
         return names
 
-    def _last_revs(self, name):
+    @classmethod
+    def _last_revs(cls, name):
         # gathers "last" for all revisions of doc named `name`
         # returns an unordered [ ("rev", "last") ]
         last_revs=[]
-        for doc_id in self.__docs:
+        for doc_id in cls.__docs:
             if name in doc_id:
-                rev=self.__fetch(doc_id, "rev")
-                last=self.__fetch(doc_id, "last")
+                rev=cls.__fetch(doc_id, "rev")
+                last=cls.__fetch(doc_id, "last")
                 last_revs.append((rev, last))
         return last_revs
 
-    def _doc_xml(self, name, rev):
+    @classmethod
+    def _doc_xml(cls, name, rev):
         # xml dump of doc named `name`, revision `rev`
-        doc_id=self.__doc_id(name, rev)
+        doc_id=cls.__doc_id(name, rev)
         doc_xml=[ _Attribute(("id", doc_id))._to_xml() ]
-        for each in self.__docs[doc_id]:
+        for each in cls.__docs[doc_id]:
             doc_xml.append(_Attribute(each)._to_xml())
         return doc_xml
 
-    def _load(self, doc_xml):
+    @classmethod
+    def _load(cls, doc_xml):
         # loads doc defined by `doc_xml` into the database
         doc_id=""
         vals=[]
@@ -98,37 +107,41 @@ class _SarosDB:
                 doc_id=val
             else:
                 vals.append((name,val))
-        self.__docs.pop(doc_id)
-        self.__docs[doc_id]=vals
-        self.__update_last(doc_id)
+        cls.__docs.pop(doc_id)
+        cls.__docs[doc_id]=vals
+        cls.__update_last(doc_id)
 
-    def __update_last(self, doc_id):
+    @classmethod
+    def __update_last(cls, doc_id):
         # doc_id -> id of doc whose revision link has just been updated.
         # for all revs of doc whose name `name` ~ as `name` of doc associated 
         # with doc_id & whose "last" < "last" of doc associated with doc_id, 
         # replace "last" with "last" of the just updated link.
-        last=self.__fetch(doc_id, "last")
-        name=self.__fetch(doc_id, "name")
-        for (_rev, _last) in self._last_revs(name):
-            _id=self.__doc_id(name, _rev)
+        last=cls.__fetch(doc_id, "last")
+        name=cls.__fetch(doc_id, "name")
+        for (_rev, _last) in cls._last_revs(name):
+            _id=cls.__doc_id(name, _rev)
             if _last < last and _id != doc_id:
-                self.__put(_id, "last", last)
+                cls.__put(_id, "last", last)
 
-    def __doc_id(self, name, rev):
+    @classmethod
+    def __doc_id(cls, name, rev):
         # returns id of doc named `name`, revision `rev`
         return name + "-" + str(rev)
 
-    def __fetch(self, doc_id, col):
+    @classmethod
+    def __fetch(cls, doc_id, col):
         # given a doc_id & col (i.e., attribute name), returns the value
-        doc=self.__docs[doc_id]
+        doc=cls.__docs[doc_id]
         for (_col, _val) in doc:
             if _col == col: return _val
         raise RuntimeError("fetch failure for doc_id: " + \
                             doc_id + " col: " + col + " not found")
 
-    def __put(self, doc_id, col, val):
+    @classmethod
+    def __put(cls, doc_id, col, val):
         # updates col (i.e., attribute name) value of doc referred by `doc_id`
-        doc=self.__docs[doc_id]
+        doc=cls.__docs[doc_id]
         for index, (_col, _val) in enumerate(doc):
             if _col == col:
                 doc[index]=(col, val)

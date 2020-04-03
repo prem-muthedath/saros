@@ -87,7 +87,6 @@ class Saros:
     # interact with Saros db; instead, they must work with this class. 
 
     def __init__(self):
-        self.__db=_SarosDB()
         self.__current_name=""  # "name" of document whose revisions are being linked
 
 
@@ -100,26 +99,26 @@ class Saros:
     def to_str(self):
         # string dump of all docs & their `id`s, ordered by `id`
         val=""
-        for (_id, _doc) in self.__db._dump():
+        for (_id, _doc) in _SarosDB()._dump():
             val+=_id + ": " + str(_doc) + "\n"
         return val.strip("\n")
 
     def __doc_names(self):
         # list of all unique doc names
-        return self.__db._doc_names()
+        return _SarosDB()._doc_names()
 
     def __last_revs(self):
         # gathers "last" for all revisions of doc named `self.__current_name`
         # returns an unordered [ ("rev", "last") ]
-        return self.__db._last_revs(self.__current_name)
+        return _SarosDB()._last_revs(self.__current_name)
 
     def _update_rev_links(self, doc_xmls):
         # updates revision links in the database
         for doc_xml in doc_xmls:
-            self.__db._load(doc_xml)
+            _SarosDB()._load(doc_xml)
 
     def _doc_xml(self, rev):
         # xml dump of doc named `self.__current_name`, revision `rev`
-        return self.__db._doc_xml(self.__current_name, rev)
+        return _SarosDB()._doc_xml(self.__current_name, rev)
 
 
