@@ -1,14 +1,11 @@
 #!/usr/bin/python
 
-from .xml import _Attribute, _XmlElement
+from .xml import _Attribute
 
 class _SarosDB:
     # this private class models Saros database -- the document repository.  it 
     # offers methods for typical database operations -- queries & updates.
     #
-    # only Saros -- the only public class in saros package -- should invoke 
-    # methods of this class. no one else should.
-    # 
     # NOTE:
     # there is no API, however, to link doc revisions; instead, clients must:
     # 1. request XML dump of a specific doc revision (i.e., doc name & revision)
@@ -91,9 +88,9 @@ class _SarosDB:
     def _doc_xml(cls, name, rev):
         # xml dump of doc named `name`, revision `rev`
         doc_id=cls.__doc_id(name, rev)
-        doc_xml=[ _Attribute(("id", doc_id))._to_xml() ]
+        doc_xml=[ _Attribute(("id", doc_id))._element() ]
         for each in cls.__docs[doc_id]:
-            doc_xml.append(_Attribute(each)._to_xml())
+            doc_xml.append(_Attribute(each)._element())
         return doc_xml
 
     @classmethod
@@ -102,7 +99,7 @@ class _SarosDB:
         doc_id=""
         vals=[]
         for each in doc_xml:
-            name, val=_XmlElement(each)._parse()
+            name, val=each._parse()
             if name=="id":
                 doc_id=val
             else:

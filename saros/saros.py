@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 from .database import _SarosDB
-from .revisions import _DocRevisionChains
+from .document import _Name
 
 # Prem: this code, written in python, links document revisions in Saros, a
 # fictitious document repository.
@@ -82,19 +82,11 @@ class Saros:
     # the only public class in this package, it interfaces with Saros database 
     # (the document repository) & other private classes to link unlinked 
     # document revisions (i.e., fix broken revision links) in Saros database.
-    # 
-    # other classes involved in the work to link doc revisions must not directly 
-    # interact with Saros db; instead, they must work with this class. 
-
-    def __init__(self):
-        self.__current_name=""  # "name" of document whose revisions are being linked
-
 
     def link_revs(self):
         # spins thru all Saros docs & links all unlinked revisions of each doc
         for each in self.__doc_names():
-            self.__current_name=each
-            _DocRevisionChains()._link(self.__last_revs(), self)
+            _Name(each)._link_revs()
 
     def to_str(self):
         # string dump of all docs & their `id`s, ordered by `id`
@@ -106,19 +98,5 @@ class Saros:
     def __doc_names(self):
         # list of all unique doc names
         return _SarosDB()._doc_names()
-
-    def __last_revs(self):
-        # gathers "last" for all revisions of doc named `self.__current_name`
-        # returns an unordered [ ("rev", "last") ]
-        return _SarosDB()._last_revs(self.__current_name)
-
-    def _update_rev_links(self, doc_xmls):
-        # updates revision links in the database
-        for doc_xml in doc_xmls:
-            _SarosDB()._load(doc_xml)
-
-    def _doc_xml(self, rev):
-        # xml dump of doc named `self.__current_name`, revision `rev`
-        return _SarosDB()._doc_xml(self.__current_name, rev)
 
 
