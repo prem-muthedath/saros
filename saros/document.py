@@ -6,11 +6,11 @@ class _Name:
     # represents a doc's name.
     def __init__(self, name):
         self.__name=name
-    
+
     def _link_revs(self):
         # assembles all revsion chains associated with a `self.__name`, and 
         # works with other classes to link broken revision links.
- 
+
         # algorithm groups revisions by their last revision.
         # each group is a rev chain, & if we've > 1, we've broken rev chains.
         # rev_chains = { last1: [rev, rev, .., rev],
@@ -94,7 +94,7 @@ class _RevisionLink:
         for index, each in enumerate(doc_xml):
             doc_xml[index]=each._update(self.__prev, self.__last)
         return doc_xml
-    
+
     def __validate(self):
         # validates the link
         if self.__rev <= 0 or \
