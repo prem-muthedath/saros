@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-from .xml import _Attribute
+from .xml import _Attribute, _Element
 
 class _SarosDB:
     # this private class models Saros database -- the document repository.  it 
@@ -88,9 +88,9 @@ class _SarosDB:
     def _doc_xml(cls, name, rev):
         # xml dump of doc named `name`, revision `rev`
         doc_id=cls.__doc_id(name, rev)
-        doc_xml=[ _Attribute(("id", doc_id))._element() ]
+        doc_xml=[ _Attribute(("id", doc_id))._to_xml() ]
         for each in cls.__docs[doc_id]:
-            doc_xml.append(_Attribute(each)._element())
+            doc_xml.append(_Attribute(each)._to_xml())
         return doc_xml
 
     @classmethod
@@ -99,7 +99,7 @@ class _SarosDB:
         doc_id=""
         vals=[]
         for each in doc_xml:
-            name, val=each._parse()
+            name, val=_Element(each)._parse()
             if name=="id":
                 doc_id=val
             else:

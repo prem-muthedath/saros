@@ -9,10 +9,9 @@ class _Attribute:
     def __init__(self, (name, val)):
         self.__name, self.__val=(name, val)
 
-    def _element(self):
-        # converts this _Attribute to an _Element
-        _str = "<" + self.__name + ">" + self.__good_val() + "</" + self.__name + ">"
-        return _Element(_str)
+    def _to_xml(self):
+        # returns an xml element "<name>value</name>"
+        return "<" + self.__name + ">" + self.__good_val() + "</" + self.__name + ">"
 
     def __good_val(self):
         # converts int to str
@@ -26,18 +25,6 @@ class _Element:
     def __init__(self, element):
         # element = "<name>value</name>"
         self.__element=element
-
-    def _update(self, prev, last):
-        # returns an updated copy if this _Element represents
-        # either a "<prev>value</prev>" or a "<last>value</last>";
-        # otherwise, returns self, unchanged.
-        name, _ = self._parse()
-        if name == "prev":
-            return _Attribute((name, prev))._element()
-        elif name == "last":
-            return _Attribute((name, last))._element()
-        else:
-            return self
 
     def _parse(self):
         # extracts (name, val)

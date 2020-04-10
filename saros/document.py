@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
 from .database import _SarosDB
+from .xml import _Attribute, _Element
 
 class _Name:
     # represents a doc's name.
@@ -92,7 +93,11 @@ class _RevisionLink:
         self.__validate()
         doc_xml=_SarosDB()._doc_xml(doc_name, self.__rev)
         for index, each in enumerate(doc_xml):
-            doc_xml[index]=each._update(self.__prev, self.__last)
+            name, _ = _Element(each)._parse()
+            if name == "prev":
+                doc_xml[index]=_Attribute((name, self.__prev))._to_xml()
+            elif name == "last":
+                doc_xml[index]=_Attribute((name, self.__last))._to_xml()
         return doc_xml
 
     def __validate(self):
