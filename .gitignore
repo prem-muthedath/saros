@@ -1,4 +1,6 @@
 # ignore evrything except *.py anywhere, .gitignore & README under project root
+# under /saros/temp/, include README, but none other.
+# exclude exp.py under root
 /**
 !*.py
 exp.py
