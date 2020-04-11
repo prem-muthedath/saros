@@ -1,0 +1,9 @@
+# ignore evrything except *.py anywhere, .gitignore & README under project root
+/**
+!*.py
+exp.py
+!/.gitignore
+!/README.md
+!/saros/
+!/saros/temp/
+!/saros/temp/README.md
