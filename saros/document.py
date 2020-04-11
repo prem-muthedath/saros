@@ -91,13 +91,21 @@ class _RevisionLink:
     def _to_xml(self, doc_name):
         # generates document xml corresponding to this revision link
         self.__validate()
-        doc_xml=_SarosDB()._doc_xml(doc_name, self.__rev)
-        for index, each in enumerate(doc_xml):
-            name, _ = _Element(each)._parse()
-            if name == "prev":
-                doc_xml[index]=_Attribute((name, self.__prev))._to_xml()
-            elif name == "last":
-                doc_xml[index]=_Attribute((name, self.__last))._to_xml()
+        doc_xml="./saros/temp/"+doc_name+"-"+str(self.__rev)+".xml"
+        _SarosDB()._doc_xml(doc_name, self.__rev, doc_xml)
+        with open(doc_xml, 'r') as reader:
+            data=reader.readlines()
+        with open(doc_xml, 'w') as writer:
+            for line in data:
+                line=line.rstrip()
+                name, _ = _Element(line)._parse()
+                if name == "prev":
+                    writer.write(_Attribute((name, self.__prev))._to_xml())
+                elif name == "last":
+                    writer.write(_Attribute((name, self.__last))._to_xml())
+                else:
+                    writer.write(line)
+                writer.write("\n")
         return doc_xml
 
     def __validate(self):

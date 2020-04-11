@@ -3,6 +3,9 @@
 from .database import _SarosDB
 from .document import _Name
 
+import os
+import glob
+
 # Prem: this code, written in python, links document revisions in Saros, a
 # fictitious document repository.
 #
@@ -82,6 +85,12 @@ class Saros:
     # the only public class in this package, it interfaces with Saros database 
     # (the document repository) & other private classes to link unlinked 
     # document revisions (i.e., fix broken revision links) in Saros database.
+
+    def __init__(self):
+        data_path=os.path.dirname(os.path.realpath(__file__))+"/temp/*.xml"
+        files=glob.glob(data_path)
+        for f in files:
+            os.remove(f)
 
     def link_revs(self):
         # spins thru all Saros docs & links all unlinked revisions of each doc

@@ -34,7 +34,7 @@ class _Element:
     def __validate(self):
         if not ( self.__element.startswith("<") and \
                  self.__element.endswith(">") ):
-            raise RuntimeError("invalid xml element: < or > missing")
+            raise RuntimeError("invalid xml element: not begin/end with <, > => " + self.__element)
 
     def __name(self):
         # "<" is the first one, so we skip it & get substring from 1:

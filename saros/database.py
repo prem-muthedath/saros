@@ -85,25 +85,28 @@ class _SarosDB:
         return last_revs
 
     @classmethod
-    def _doc_xml(cls, name, rev):
+    def _doc_xml(cls, name, rev, doc_xml):
         # xml dump of doc named `name`, revision `rev`
         doc_id=cls.__doc_id(name, rev)
-        doc_xml=[ _Attribute(("id", doc_id))._to_xml() ]
-        for each in cls.__docs[doc_id]:
-            doc_xml.append(_Attribute(each)._to_xml())
-        return doc_xml
+        with open(doc_xml, 'w') as writer:
+            writer.write(_Attribute(("id", doc_id))._to_xml())
+            for each in cls.__docs[doc_id]:
+                writer.write("\n")
+                writer.write(_Attribute(each)._to_xml())
 
     @classmethod
     def _load(cls, doc_xml):
         # loads doc defined by `doc_xml` into the database
         doc_id=""
         vals=[]
-        for each in doc_xml:
-            name, val=_Element(each)._parse()
-            if name=="id":
-                doc_id=val
-            else:
-                vals.append((name,val))
+        with open(doc_xml, 'r') as reader:
+            for line in reader:
+                line=line.rstrip()
+                name, val=_Element(line)._parse()
+                if name=="id":
+                    doc_id=val
+                else:
+                    vals.append((name,val))
         cls.__docs.pop(doc_id)
         cls.__docs[doc_id]=vals
         cls.__update_last(doc_id)
