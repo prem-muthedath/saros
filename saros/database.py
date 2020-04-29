@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-from .xml import  _File
+from .xml import _File
 
 class _SarosDB:
     # this private class models Saros database -- the document repository.  it 
