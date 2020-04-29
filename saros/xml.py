@@ -86,14 +86,13 @@ class _File:
 
     def _update(self, prev, last):
         # updates `prev` & `last` values in xml file
-        doc=self._read()
-        with open(self.__name, 'w') as writer:
-            for (name, val) in doc:
-                if name == "prev":
-                    val=prev
-                elif name == "last":
-                    val=last
-                writer.write(_Attribute((name, val))._to_xml())
-                writer.write("\n")
+        doc=[]
+        for (name, val) in self._read():
+            if name == "prev":
+                val=prev
+            elif name == "last":
+                val=last
+            doc.append((name, val))
+        self._write(doc)
 
 
