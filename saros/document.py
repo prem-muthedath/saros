@@ -91,7 +91,8 @@ class _RevisionLink:
     def _to_xml(self, doc_name):
         # generates document xml corresponding to this revision link
         self.__validate()
-        doc_xml="./saros/temp/"+doc_name+"-"+str(self.__rev)+".xml"
+        # doc_xml="./saros/temp/"+doc_name+"-"+str(self.__rev)+".xml"
+        doc_xml=doc_name+"-"+str(self.__rev)
         _SarosDB()._doc_xml(doc_name, self.__rev, doc_xml)
         _File(doc_xml)._update(self.__prev, self.__last)
         return doc_xml

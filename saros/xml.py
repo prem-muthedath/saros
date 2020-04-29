@@ -1,5 +1,7 @@
 #!/usr/bin/python
 
+import os
+
 # this module contains private classes that do back-and-forth conversion between 
 # a (name, value) pair & its XML element representation -- <name>value</name>
 ################################################################################
@@ -64,12 +66,13 @@ class _File:
     # represents an xml file that has complete info about a document
     def __init__(self, name):
         # `name` is name of xml file
+        # NOTE: `name` does NOT include file path and file extension
         self.__name = name
 
     def _write(self, doc):
         # writes `doc` as an xml.  `doc` represents a document as an array of 
         # attributes = [(name, val), ..., (name, val)]
-        with open(self.__name, 'w') as writer:
+        with open(self.__full_name(), 'w') as writer:
             for each in doc:
                 writer.write(_Attribute(each)._to_xml())
                 writer.write("\n")
@@ -78,11 +81,29 @@ class _File:
         # reads xml file, returning document as an array of attributes
         # `doc` = array of document attributes = [(name, val), ..., (name, val)]
         doc=[]
-        with open(self.__name, 'r') as reader:
+        with open(self.__full_name(), 'r') as reader:
             for line in reader:
                 line=line.rstrip()
                 doc.append(_Element(line)._parse())
         return doc
+
+    def __full_name(self):
+        # returns full name of xml file: full path + file name + extension
+        # example: ~/../saros/saros/temp/doc.xml
+        return self.___path()+self.__name+self.__type()
+
+    def ___path(self):
+        # returns full path to the xml file
+        return os.path.dirname(os.path.realpath(__file__))+ \
+                "/"+self.__directory()+"/"
+
+    def __directory(self):
+        # directory containing the xml file
+        return "temp"
+
+    def __type(self):
+        # xml file extension
+        return ".xml"
 
     def _update(self, prev, last):
         # updates `prev` & `last` values in xml file
