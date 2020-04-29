@@ -3,9 +3,6 @@
 from .database import _SarosDB
 from .document import _Name
 
-import os
-import glob
-
 # Prem: this code, written in python, links document revisions in Saros, a
 # fictitious document repository.
 #
