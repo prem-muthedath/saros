@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 from .database import _SarosDB
-from .xml import _Attribute, _Element
+from .xml import  _File
 
 class _Name:
     # represents a doc's name.
@@ -93,19 +93,7 @@ class _RevisionLink:
         self.__validate()
         doc_xml="./saros/temp/"+doc_name+"-"+str(self.__rev)+".xml"
         _SarosDB()._doc_xml(doc_name, self.__rev, doc_xml)
-        with open(doc_xml, 'r') as reader:
-            data=reader.readlines()
-        with open(doc_xml, 'w') as writer:
-            for line in data:
-                line=line.rstrip()
-                name, _ = _Element(line)._parse()
-                if name == "prev":
-                    writer.write(_Attribute((name, self.__prev))._to_xml())
-                elif name == "last":
-                    writer.write(_Attribute((name, self.__last))._to_xml())
-                else:
-                    writer.write(line)
-                writer.write("\n")
+        _File(doc_xml)._update(self.__prev, self.__last)
         return doc_xml
 
     def __validate(self):

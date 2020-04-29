@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-from .xml import _Attribute, _Element
+from .xml import  _File
 
 class _SarosDB:
     # this private class models Saros database -- the document repository.  it 
@@ -87,26 +87,21 @@ class _SarosDB:
     @classmethod
     def _doc_xml(cls, name, rev, doc_xml):
         # xml dump of doc named `name`, revision `rev`
+        # `doc_xml` = xml file name
         doc_id=cls.__doc_id(name, rev)
-        with open(doc_xml, 'w') as writer:
-            writer.write(_Attribute(("id", doc_id))._to_xml())
-            for each in cls.__docs[doc_id]:
-                writer.write("\n")
-                writer.write(_Attribute(each)._to_xml())
+        doc=[("id", doc_id)] + cls.__docs[doc_id]
+        _File(doc_xml)._write(doc)
 
     @classmethod
     def _load(cls, doc_xml):
-        # loads doc defined by `doc_xml` into the database
+        # loads xml file named `doc_xml` into the database
         doc_id=""
         vals=[]
-        with open(doc_xml, 'r') as reader:
-            for line in reader:
-                line=line.rstrip()
-                name, val=_Element(line)._parse()
-                if name=="id":
-                    doc_id=val
-                else:
-                    vals.append((name,val))
+        for (name, val) in _File(doc_xml)._read():
+            if name=="id":
+                 doc_id=val
+            else:
+                vals.append((name,val))
         cls.__docs.pop(doc_id)
         cls.__docs[doc_id]=vals
         cls.__update_last(doc_id)

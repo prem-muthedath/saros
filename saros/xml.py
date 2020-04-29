@@ -59,3 +59,41 @@ class _Element:
         except ValueError:
             return val
 
+
+class _File:
+    # represents an xml file that has complete info about a document
+    def __init__(self, name):
+        # `name` is name of xml file
+        self.__name = name
+
+    def _write(self, doc):
+        # writes `doc` as an xml.  `doc` represents a document as an array of 
+        # attributes = [(name, val), ..., (name, val)]
+        with open(self.__name, 'w') as writer:
+            for each in doc:
+                writer.write(_Attribute(each)._to_xml())
+                writer.write("\n")
+
+    def _read(self):
+        # reads xml file, returning document as an array of attributes
+        # `doc` = array of document attributes = [(name, val), ..., (name, val)]
+        doc=[]
+        with open(self.__name, 'r') as reader:
+            for line in reader:
+                line=line.rstrip()
+                doc.append(_Element(line)._parse())
+        return doc
+
+    def _update(self, prev, last):
+        # updates `prev` & `last` values in xml file
+        doc=self._read()
+        with open(self.__name, 'w') as writer:
+            for (name, val) in doc:
+                if name == "prev":
+                    val=prev
+                elif name == "last":
+                    val=last
+                writer.write(_Attribute((name, val))._to_xml())
+                writer.write("\n")
+
+
