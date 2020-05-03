@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 from .database import _SarosDB
-from .document import _Name
+from .document import _Document
 
 # Prem: this code, written in python, links document revisions in Saros, a
 # fictitious document repository.
@@ -85,8 +85,8 @@ class Saros:
 
     def link_revs(self):
         # spins thru all Saros docs & links all unlinked revisions of each doc
-        for each in self.__doc_names():
-            _Name(each)._link_revs()
+        for name in self.__doc_names():
+            _Document(name)._link_revs()
 
     def to_str(self):
         # string dump of all docs & their `id`s, ordered by `id`
@@ -98,5 +98,6 @@ class Saros:
     def __doc_names(self):
         # list of all unique doc names
         return _SarosDB()._doc_names()
+
 
 

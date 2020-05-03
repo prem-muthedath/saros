@@ -3,8 +3,8 @@
 from .database import _SarosDB
 from .xml import  _File
 
-class _Name:
-    # represents a doc's name.
+class _Document:
+    # represents a document, one identfied by a given name.
     def __init__(self, name):
         self.__name=name
 
@@ -35,27 +35,41 @@ class _Name:
     def _update(self, rev_links):
         # updates revision links in Saros
         for each in rev_links:
-            doc_xml=each._to_xml(self.__name)
-            _SarosDB()._load(doc_xml)
+            try:
+                each._update(self)
+            except _RevisionLinkError as e:
+                msg=self.__str__() + ", " + e.__str__()
+                raise _RevisionLinkError(msg)
+
+    def __str__(self):
+        # string representation of _Document
+        return "document: " + self.__name
+
+    def _dump_file(self, rev):
+        # returns name of dump file -- file containing Saros database dump of 
+        # doc named `self.__name` & revision `rev`
+        _file=self.__name+"-"+str(rev)      # file name
+        _SarosDB()._doc_dump(self.__name, rev, _file)
+        return _file
 
 
 class _RevisionChains:
-    # represents a doc's revision chains.
+    # represents revision chains assciated with a _Document.
     # spots unlinked revisions, & generates correct revision links;
-    # calls `Name` to update correct links in Saros.
+    # calls `_Document` to update correct links in Saros.
     def __init__(self, rev_chains):
         # revision chain: 1 or more revisions grouped by their last revision.
         # self.__rev_chains = { last1: [rev, rev, .., rev],
         #                       last2: [rev, rev, .., rev], ... }
         self.__rev_chains = rev_chains
 
-    def _link(self, name):
+    def _link(self, doc):
         # identifies & links broken revision chains
         #
         # if we've > 1 revision chain, we've broken revision chains.
         if self.__no_broken_links():    # skip if no broken links
             return
-        name._update(self.__correct_rev_links())
+        doc._update(self.__correct_rev_links())
 
     def __correct_rev_links(self):
         # returns correct revision links to fix broken revision chains
@@ -88,22 +102,41 @@ class _RevisionLink:
         self.__rev=rev      # revision
         self.__last=last    # last revision in the chain "rev" belongs
 
-    def _to_xml(self, doc_name):
-        # generates document xml corresponding to this revision link
+    def _update(self, doc):
+        # update link in Saros
         self.__validate()
-        # doc_xml="./saros/temp/"+doc_name+"-"+str(self.__rev)+".xml"
-        doc_xml=doc_name+"-"+str(self.__rev)
-        _SarosDB()._doc_xml(doc_name, self.__rev, doc_xml)
-        _File(doc_xml)._update(self.__prev, self.__last)
-        return doc_xml
+        _file=doc._dump_file(self.__rev)
+        _File(_file)._update(self.__prev, self.__last)
+        _SarosDB()._load(_file)
 
     def __validate(self):
         # validates the link
         if self.__rev <= 0 or \
                 self.__rev != self.__prev + 1 or \
                 self.__last < self.__rev:
-            raise RuntimeError("invalid revision link: " + \
-                "prev: " + str(self.__prev) + " "  \
-                "rev: " + str(self.__rev) + " " \
-                "last: " + str(self.__last))
+            msg = self.__str__() + ", " + self.__cause()
+            raise _RevisionLinkError(msg)
+
+    def __str__(self):
+        # string representation of _RevisionLink
+        return "prev: " + str(self.__prev) + ", "  \
+                "rev: " + str(self.__rev) + ", " \
+                "last: " + str(self.__last)
+
+    def __cause(self):
+        # probable cause for invalid link
+        return "CAUSE: rev <= 0 or rev != prev + 1 or last < rev"
+
+
+class _RevisionLinkError(Exception):
+    # represents revision link error
+    def __init__(self, msg):
+        # msg: error message
+        self.__msg=msg
+
+    def __str__(self):
+        # string representation of _RevisionLinkError
+        return self.__msg.__str__()
+
+
 
