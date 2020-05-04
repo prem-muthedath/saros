@@ -30,16 +30,19 @@ class _Document:
         valid_links=[]
         for index, link in enumerate(self.__saros_links()):
             rev, last = link
+            data=[link]      # data for error msg
             if rev <= 0 or last <= 0:
-                raise _NonPositiveLinkError(self.__msg(link))
+                raise _NonPositiveLinkError(self.__msg(data))
             if last < rev:
-                raise _LastBelowRevisionError(self.__msg(link))
-            if index > 0 and link == prev_link:
-                raise _DuplicateLinkError(self.__msg(link, prev_link))
-            if index > 0 and last < prev_link[1]:
-                raise _DecreasingLastError(self.__msg(link, prev_link))
-            if index > 0 and rev != prev_link[0] + 1:
-                raise _NonConsecutiveRevisionsError(self.__msg(link, prev_link))
+                raise _LastBelowRevisionError(self.__msg(data))
+            if index > 0:
+                data=[prev_link]+data
+                if  link == prev_link:
+                    raise _DuplicateLinkError(self.__msg(data))
+                if last < prev_link[1]:
+                    raise _DecreasingLastError(self.__msg(data))
+                if rev != prev_link[0] + 1:
+                    raise _NonConsecutiveRevisionsError(self.__msg(data))
             prev_link=link
             valid_links.append(_Link(link))
         return valid_links
@@ -53,13 +56,9 @@ class _Document:
         saros_links = _SarosDB()._last_revs(self.__name)
         return sorted(saros_links, key=lambda(rev, last): rev)
 
-    def __msg(self, this, prev=None):
+    def __msg(self, data):
         # error meesage
-        if prev:
-            return ", ".join([self.__str(),
-                            "prev (rev, last): " + str(prev),
-                            "this (rev, last): " + str(this)])
-        return ", ". join([self.__str(), "(rev, last): " + str(this)])
+        return self.__str() + ", " + "[(rev, last)] -> " + str(data)
 
     def __str(self):
         # string representation of _Document
