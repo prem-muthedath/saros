@@ -4,139 +4,112 @@ from .database import _SarosDB
 from .xml import  _File
 
 class _Document:
-    # represents a document, one identfied by a given name.
+    # represents a document, one identified by a given name.
+    # this class links all unlinked revisions associated with a document name.
     def __init__(self, name):
         self.__name=name
 
     def _link_revs(self):
-        # assembles all revsion chains associated with a `self.__name`, and 
-        # works with other classes to link broken revision links.
-
-        # algorithm groups revisions by their last revision.
-        # each group is a rev chain, & if we've > 1, we've broken rev chains.
-        # rev_chains = { last1: [rev, rev, .., rev],
-        #                last2: [rev, rev, .., rev], ... }
-        rev_chains={}
-        for (rev, last) in self.__last_revs():
-            if last not in rev_chains:
-                rev_chains[last]=[rev]
-            else:
-               rev_chains[last].append(rev)
-        _RevisionChains(rev_chains)._link(self)
-
-    def __last_revs(self):
-        # gathers "last" for all revisions of doc named `self.__name`;
-        # returns an unordered [ ("rev", "last") ]
-        #
-        # last_revs = [ (rev, last), .., (rev, last) ]
-        # NOTE: last_revs is unordered either by rev or by last
-        return _SarosDB()._last_revs(self.__name)
-
-    def _update(self, rev_links):
-        # updates revision links in Saros
-        for each in rev_links:
-            try:
-                each._update(self)
-            except _RevisionLinkError as e:
-                msg=self.__str__() + ", " + e.__str__()
-                raise _RevisionLinkError(msg)
-
-    def __str__(self):
-        # string representation of _Document
-        return "document: " + self.__name
+        # links all unlinked revs of `self.__name` to form a single rev chain.
+        links=self.__valid_links()
+        # broken rev link is where a rev is without a valid prev.
+        # skip first link, however, as its rev can not have a prev.
+        # so we loop from [1:], but index starts @ 0, so index -> prev item.
+        for index, link in enumerate(links[1:]):
+            prev=links[index]
+            link._linkTo(prev, self)
 
     def _dump_file(self, rev):
-        # returns name of dump file -- file containing Saros database dump of 
-        # doc named `self.__name` & revision `rev`
+        # name of file holding Saros dump of doc having `self.__name` & `rev`
         _file=self.__name+"-"+str(rev)      # file name
         _SarosDB()._doc_dump(self.__name, rev, _file)
         return _file
 
+    def __valid_links(self):
+        # validated revision links associated with `self.__name`
+        valid_links=[]
+        for index, link in enumerate(self.__saros_links()):
+            rev, last = link
+            if rev <= 0 or last <= 0:
+                raise _NonPositiveLinkError(self.__msg(link))
+            if last < rev:
+                raise _LastBelowRevisionError(self.__msg(link))
+            if index > 0 and link == prev_link:
+                raise _DuplicateLinkError(self.__msg(link, prev_link))
+            if index > 0 and last < prev_link[1]:
+                raise _DecreasingLastError(self.__msg(link, prev_link))
+            if index > 0 and rev != prev_link[0] + 1:
+                raise _NonConsecutiveRevisionsError(self.__msg(link, prev_link))
+            prev_link=link
+            valid_links.append(_Link(link))
+        return valid_links
 
-class _RevisionChains:
-    # represents revision chains assciated with a _Document.
-    # spots unlinked revisions, & generates correct revision links;
-    # calls `_Document` to update correct links in Saros.
-    def __init__(self, rev_chains):
-        # revision chain: 1 or more revisions grouped by their last revision.
-        # self.__rev_chains = { last1: [rev, rev, .., rev],
-        #                       last2: [rev, rev, .., rev], ... }
-        self.__rev_chains = rev_chains
+    def __saros_links(self):
+        # Saros revision links for doc `self.__name`, sorted by `rev`.
+        # revision links = links = last_revs = [ (rev, last), .., (rev, last) ]
 
-    def _link(self, doc):
-        # identifies & links broken revision chains
-        #
-        # if we've > 1 revision chain, we've broken revision chains.
-        if self.__no_broken_links():    # skip if no broken links
-            return
-        doc._update(self.__correct_rev_links())
+        # NOTE: last_revs from Saros db are unordered either by `rev` or by 
+        # `last`, but this routine sorts them by `rev` in ascending order.
+        saros_links = _SarosDB()._last_revs(self.__name)
+        return sorted(saros_links, key=lambda(rev, last): rev)
 
-    def __correct_rev_links(self):
-        # returns correct revision links to fix broken revision chains
-        rev_links=[]
-        lasts=sorted(self.__rev_chains)
-        for each in lasts:
-            self.__rev_chains[each].sort()
-        for index, each in enumerate(lasts[1:]):
-            # scan all rev chains for broken rev links & return corrected links.
-            # broken rev link is where a rev is without a valid prev.
-            # 1st rev in a rev chain is a broken link, because it has no prev.
-            # skip first rev chain, however, as its 1st rev can not have a prev.
-            # the 1st rev in all other rev chains is a broken rev link.
-            # index starts @ 0, but we loop from [1:], so index -> prev item.
-            prev_last=lasts[index]
-            prev=self.__rev_chains[prev_last][-1]
-            rev=self.__rev_chains[each][0]
-            rev_links.append(_RevisionLink(prev, rev, each))
-        return rev_links
+    def __msg(self, this, prev=None):
+        # error meesage
+        if prev:
+            return ", ".join([self.__str(),
+                            "prev (rev, last): " + str(prev),
+                            "this (rev, last): " + str(this)])
+        return ", ". join([self.__str(), "(rev, last): " + str(this)])
 
-    def __no_broken_links(self):
-        # if we've broken revision links, we'll have > 1 rev chain
-        return len(self.__rev_chains) < 2
+    def __str(self):
+        # string representation of _Document
+        return "document: " + self.__name
 
 
-class _RevisionLink:
-    # represents a valid revision link
-    def __init__(self, prev, rev, last):
-        self.__prev=prev    # "rev"'s previous revision
-        self.__rev=rev      # revision
-        self.__last=last    # last revision in the chain "rev" belongs
+class _Link:
+    # represents a revision link -- `(rev, last)`
+    # it links a broken revision link in Saros.
+    def __init__(self, (rev, last)):
+        self.__rev=rev
+        self.__last=last
 
-    def _update(self, doc):
-        # update link in Saros
-        self.__validate()
-        _file=doc._dump_file(self.__rev)
-        _File(_file)._update(self.__prev, self.__last)
-        _SarosDB()._load(_file)
-
-    def __validate(self):
-        # validates the link
-        if self.__rev <= 0 or \
-                self.__rev != self.__prev + 1 or \
-                self.__last < self.__rev:
-            msg = self.__str__() + ", " + self.__cause()
-            raise _RevisionLinkError(msg)
-
-    def __str__(self):
-        # string representation of _RevisionLink
-        return "prev: " + str(self.__prev) + ", "  \
-                "rev: " + str(self.__rev) + ", " \
-                "last: " + str(self.__last)
-
-    def __cause(self):
-        # probable cause for invalid link
-        return "CAUSE: rev <= 0 or rev != prev + 1 or last < rev"
+    def _linkTo(self, prev, doc):
+        # if unlinked, links itself to its previous revision in Saros.
+        linked=self.__last==prev.__last
+        if not linked:
+            _file=doc._dump_file(self.__rev)
+            _File(_file)._update(self.__rev-1, self.__last)
+            _SarosDB()._load(_file)
 
 
-class _RevisionLinkError(Exception):
-    # represents revision link error
+class _LinkError(Exception):
+    # represents link error
     def __init__(self, msg):
         # msg: error message
         self.__msg=msg
 
     def __str__(self):
-        # string representation of _RevisionLinkError
+        # string representation of _LinkError
         return self.__msg.__str__()
 
+class _NonPositiveLinkError(_LinkError):
+    # represents `rev` < 0 or `last` < 0 in `(rev, last)` error.
+    pass
+
+class _LastBelowRevisionError(_LinkError):
+    # represents `last` < `rev` in `(rev, last)` error.
+    pass
+
+class _DuplicateLinkError(_LinkError):
+    # represents duplicate `(rev, last)` error.
+    pass
+
+class _DecreasingLastError(_LinkError):
+    # represents `last2` < `last1` in `[(rev1, last1), (rev2, last2)]` error.
+    pass
+
+class _NonConsecutiveRevisionsError(_LinkError):
+    # represents `rev2` != `rev1` + 1 in `[(rev1, last1), (rev2, last2)]` error.
+    pass
 
 
