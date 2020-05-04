@@ -78,7 +78,7 @@ class _Link:
         linked=self.__last==prev.__last
         if not linked:
             _file=doc._dump_file(self.__rev)
-            _File(_file)._update(self.__rev-1, self.__last)
+            _File(_file)._update(self.__rev-1)      # update prev value
             _SarosDB()._load(_file)
 
 

@@ -105,14 +105,12 @@ class _File:
         # xml file extension
         return ".xml"
 
-    def _update(self, prev, last):
-        # updates `prev` & `last` values in xml file
+    def _update(self, prev):
+        # updates `prev` value in xml file
         doc=[]
         for (name, val) in self._read():
             if name == "prev":
                 val=prev
-            elif name == "last":
-                val=last
             doc.append((name, val))
         self._write(doc)
 
