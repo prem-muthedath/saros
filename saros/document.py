@@ -28,6 +28,7 @@ class _Document:
     def __valid_links(self):
         # validated revision links associated with `self.__name`
         valid_links=[]
+        rev, last = (0, 0)
         for index, link in enumerate(self.__saros_links()):
             rev, last = link
             data=[link]      # data for error msg
@@ -36,15 +37,22 @@ class _Document:
             if last < rev:
                 raise _LastBelowRevisionError(self.__msg(data))
             if index > 0:
+                prev, plast = prev_link
                 data=[prev_link]+data
-                if  link == prev_link:
+                if link == prev_link:
                     raise _DuplicateLinkError(self.__msg(data))
-                if last < prev_link[1]:
+                if last < plast:
                     raise _DecreasingLastError(self.__msg(data))
-                if rev != prev_link[0] + 1:
+                if rev != prev + 1:
                     raise _NonConsecutiveRevisionsError(self.__msg(data))
+                data=self.__missing_links(prev, plast)
+                if plast < last and len(data) > 0:
+                    raise _MissingLinksError(self.__msg(data))
             prev_link=link
             valid_links.append(_Link(link))
+        data=self.__missing_links(rev, last)
+        if len(data) > 0:
+            raise _MissingLinksError(self.__msg(data))
         return valid_links
 
     def __saros_links(self):
@@ -55,6 +63,10 @@ class _Document:
         # `last`, but this routine sorts them by `rev` in ascending order.
         saros_links = _SarosDB()._last_revs(self.__name)
         return sorted(saros_links, key=lambda(rev, last): rev)
+
+    def __missing_links(self, rev, last):
+        # missing links
+        return [(x, last) for x in range(rev+1, last+1)]
 
     def __msg(self, data):
         # error meesage
@@ -111,4 +123,7 @@ class _NonConsecutiveRevisionsError(_LinkError):
     # represents `rev2` != `rev1` + 1 in `[(rev1, last1), (rev2, last2)]` error.
     pass
 
+class _MissingLinksError(_LinkError):
+    # represents missing link `(last, last)` error.
+    pass
 
