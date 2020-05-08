@@ -11,8 +11,8 @@ class _SarosDB:
     # 1. request XML dump of a specific doc revision (i.e., doc name & revision)
     # 2. update XML with valid revision link info, & send it to SarosDB to load
     # 3. SarosDB then parses XML, & loads data
-    # 4. After load, SarosDB updates "last" of all revisions of the doc whose 
-    #    "last" < "last" of the just updated link.
+    # 4. After load, by default, SarosDB updates "last" of all revisions of the 
+    #    doc whose "last" < "last" of the just updated link.
     #
     # SCHEMA:
     # 1. each row represents a doc with a unique combination of "name" & "rev"
@@ -58,8 +58,9 @@ class _SarosDB:
     def _dump(cls):
         # dump of all docs & their `id`s, sorted by `id`
         dump=[]
-        for each in sorted(cls.__docs):
-            dump.append((each, cls.__docs[each]))
+        for _id in sorted(cls.__docs):
+            data=cls.__doc_data(_id)    # fix for a nasty bug
+            dump.append((_id, data))
         return dump 
 
     @classmethod
@@ -70,7 +71,7 @@ class _SarosDB:
             name=cls.__fetch(doc_id, "name")
             if name not in names:
                 names.append(name)
-        return names
+        return sorted(names)
 
     @classmethod
     def _last_revs(cls, name):
@@ -88,12 +89,14 @@ class _SarosDB:
     def _doc_dump(cls, name, rev, _file):
         # dumps doc named `name`, revision `rev` as xml into file named `_file`
         doc_id=cls.__doc_id(name, rev)
-        doc=[("id", doc_id)] + cls.__docs[doc_id]
+        data=cls.__doc_data(doc_id)    # fixed to avoid potential nasty bugs
+        doc=[("id", doc_id)] + data
         _File(_file)._write(doc)
 
     @classmethod
-    def _load(cls, _file):
+    def _load(cls, _file, link=True):
         # loads xml doc info contained in file named `_file` into the database.
+        # by default, this method updates `last` values for upstream revs.
         doc_id=""
         vals=[]
         for (name, val) in _File(_file)._read():
@@ -103,7 +106,15 @@ class _SarosDB:
                 vals.append((name,val))
         cls.__docs.pop(doc_id)
         cls.__docs[doc_id]=vals
-        cls.__update_last(doc_id)
+        if link:
+            cls.__update_last(doc_id)
+
+    @classmethod
+    def __doc_data(cls, doc_id):
+        # returns doc data, as a new list, for a given `doc_id`
+        # new list reqd; otherwise, any local changes, made either by clients or 
+        # by saros, will be reflected everywhere, creating nasty bugs.
+        return [item for item in cls.__docs[doc_id]]
 
     @classmethod
     def __update_last(cls, doc_id):

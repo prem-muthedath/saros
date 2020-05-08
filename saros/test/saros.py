@@ -24,12 +24,13 @@ class Test(unittest.TestCase):
         for (_id, doc) in self._docs:
             doc=[("id", _id)] + doc
             _File(self._file)._write(doc)
-            _SarosDB._load(self._file)
+            _SarosDB._load(self._file, False)
         self._saros=None
         self_docs=None
         self._file=None
 
     def runTest(self):
+        self._header()
         self._print("BEFORE")
         self._saros.link_revs()
         self._print("AFTER")
@@ -37,6 +38,9 @@ class Test(unittest.TestCase):
 
     def _print(self, _str):
         print("SAROS REPOSITORY STATE " +  _str + ": \n" + self._saros.to_str() + "\n")
+
+    def _header(self):
+        print "\n -------------------- NEW TEST: " + type(self).__name__ + " --------------------- "
 
     def __expected_repo(self):
         return '\n'.join([
@@ -64,6 +68,8 @@ class Test(unittest.TestCase):
 class TestError(Test):
     # base class for error tests
     def runTest(self):
+        self._header()
+        self._print("BEFORE")
         self._setUp()
         self._assert()
 
@@ -75,7 +81,7 @@ class TestError(Test):
         doc=f._read()
         mdoc=self._modified_doc(doc)
         f._write(mdoc)
-        _SarosDB()._load(self._file)
+        _SarosDB()._load(self._file, False)
 
     def _doc_dump(self):
         # saros doc dump

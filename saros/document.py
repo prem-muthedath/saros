@@ -29,23 +29,21 @@ class _Document:
         # validated revision links associated with `self.__name`
         links=self.__saros_links()
         for i, (rev, last) in enumerate(links):
-            data=[links[x] for x in range(i, i+1)]  # data for error msg
+            prev, plast=(0,0) if i==0 else links[i-1]
+            data=links[i:i+1] if i==0 else links[i-1:i+1]
             if rev <= 0 or last <= 0:
                 raise _NonPositiveLinkError(self, data)
             if last < rev:
                 raise _LastBelowRevisionError(self, data)
-            if i > 0:
-                prev, plast = links[i-1]   # prev rev, last
-                data=[links[x] for x in range(i-1, i+1)]
-                if links[i-1] == links[i]:
-                    raise _DuplicateLinkError(self, data)
-                if last < plast:
-                    raise _DecreasingLastError(self, data)
-                if rev != prev + 1:
-                    raise _NonConsecutiveRevisionsError(self, data)
-                data=self.__missing_links(prev, plast)
-                if plast < last and len(data) > 0:
-                    raise _MissingLinksError(self, data)
+            if (prev, plast) == links[i]:
+                raise _DuplicateLinkError(self, data)
+            if last < plast:
+                raise _DecreasingLastError(self, data)
+            if rev != prev + 1:
+                raise _NonConsecutiveRevisionsError(self, data)
+            data=self.__missing_links(prev, plast)
+            if plast < last and len(data) > 0:
+                raise _MissingLinksError(self, data)
             data=self.__missing_links(rev, last)
             if i==len(links)-1 and len(data) > 0:
                 raise _MissingLinksError(self, data)
