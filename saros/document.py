@@ -15,9 +15,9 @@ class _Document:
         # broken rev link is where a rev is without a valid prev.
         # skip first link, however, as its rev can not have a prev.
         # so we loop from [1:], but index starts @ 0, so index -> prev item.
-        for index, link in enumerate(links[1:]):
-            prev=links[index]
-            link._linkTo(prev, self)
+        for i, link in enumerate(links[1:]):
+            prev=_Link(links[i])
+            _Link(link)._linkTo(prev, self)
 
     def _dump_file(self, rev):
         # name of file holding Saros dump of doc having `self.__name` & `rev`
@@ -27,33 +27,29 @@ class _Document:
 
     def __valid_links(self):
         # validated revision links associated with `self.__name`
-        valid_links=[]
-        rev, last = (0, 0)
-        for index, link in enumerate(self.__saros_links()):
-            rev, last = link
-            data=[link]      # data for error msg
+        links=self.__saros_links()
+        for i, (rev, last) in enumerate(links):
+            data=[links[x] for x in range(i, i+1)]  # data for error msg
             if rev <= 0 or last <= 0:
-                raise _NonPositiveLinkError(self.__msg(data))
+                raise _NonPositiveLinkError(self, data)
             if last < rev:
-                raise _LastBelowRevisionError(self.__msg(data))
-            if index > 0:
-                prev, plast = prev_link
-                data=[prev_link]+data
-                if link == prev_link:
-                    raise _DuplicateLinkError(self.__msg(data))
+                raise _LastBelowRevisionError(self, data)
+            if i > 0:
+                prev, plast = links[i-1]   # prev rev, last
+                data=[links[x] for x in range(i-1, i+1)]
+                if links[i-1] == links[i]:
+                    raise _DuplicateLinkError(self, data)
                 if last < plast:
-                    raise _DecreasingLastError(self.__msg(data))
+                    raise _DecreasingLastError(self, data)
                 if rev != prev + 1:
-                    raise _NonConsecutiveRevisionsError(self.__msg(data))
+                    raise _NonConsecutiveRevisionsError(self, data)
                 data=self.__missing_links(prev, plast)
                 if plast < last and len(data) > 0:
-                    raise _MissingLinksError(self.__msg(data))
-            prev_link=link
-            valid_links.append(_Link(link))
-        data=self.__missing_links(rev, last)
-        if len(data) > 0:
-            raise _MissingLinksError(self.__msg(data))
-        return valid_links
+                    raise _MissingLinksError(self, data)
+            data=self.__missing_links(rev, last)
+            if i==len(links)-1 and len(data) > 0:
+                raise _MissingLinksError(self, data)
+        return links
 
     def __saros_links(self):
         # Saros revision links for doc `self.__name`, sorted by `rev`.
@@ -68,11 +64,7 @@ class _Document:
         # missing links
         return [(x, last) for x in range(rev+1, last+1)]
 
-    def __msg(self, data):
-        # error meesage
-        return self.__str() + ", " + "[(rev, last)] -> " + str(data)
-
-    def __str(self):
+    def _str(self):
         # string representation of _Document
         return "document: " + self.__name
 
@@ -86,7 +78,7 @@ class _Link:
 
     def _linkTo(self, prev, doc):
         # if unlinked, links itself to its previous revision in Saros.
-        linked=self.__last==prev.__last
+        linked=self.__rev > 1 and self.__last==prev.__last
         if not linked:
             _file=doc._dump_file(self.__rev)
             _File(_file)._update(self.__rev-1)      # update prev value
@@ -95,16 +87,18 @@ class _Link:
 
 class _LinkError(Exception):
     # represents link error
-    def __init__(self, msg):
-        # msg: error message
-        self.__msg=msg
+    def __init__(self, doc, data):
+        # doc: _Document object
+        # data: `[(rev, last)]` related to error
+        self.__doc=doc
+        self.__data=data
 
     def __str__(self):
-        # string representation of _LinkError
-        return self.__msg.__str__()
+        # err msg
+        return self.__doc._str() + ", " + "[(rev, last)] -> " + str(self.__data)
 
 class _NonPositiveLinkError(_LinkError):
-    # represents `rev` < 0 or `last` < 0 in `(rev, last)` error.
+    # represents `rev` <= 0 or `last` <= 0 in `(rev, last)` error.
     pass
 
 class _LastBelowRevisionError(_LinkError):
@@ -124,6 +118,6 @@ class _NonConsecutiveRevisionsError(_LinkError):
     pass
 
 class _MissingLinksError(_LinkError):
-    # represents missing link `(last, last)` error.
+    # represents missing links `[(rev, last)]` error.
     pass
 
