@@ -4,13 +4,16 @@ import unittest
 from ..saros import Saros
 from ..database import _SarosDB
 from ..xml import _File
-from ..document import (_NonPositiveLinkError,
+from ..errors import (_NonPositiveLinkError,
                         _LastBelowRevisionError,
                         _DuplicateLinkError,
                         _DecreasingLastError,
                         _NonConsecutiveRevisionsError,
                         _MissingLinksError,
                         )
+
+# test module -- contains all unit tests for saros application
+# ##############################################################################
 
 class Test(unittest.TestCase):
     # tests linking of broken revision chains in Saros
@@ -95,6 +98,13 @@ class TestError(Test):
         # assert expected error
         pass
 
+    def _assert_with(self, exception):
+        # assert with expected error
+        # REF: https://docs.python.org/2/library/unittest.html
+        with self.assertRaises(exception) as cn:
+            self._saros.link_revs()
+        print "exception: ", type(cn.exception).__name__, " msg: ", cn.exception
+
 class TestRevNotPositive(TestError):
     # tests rev <=0
     def _doc_dump(self):
@@ -104,7 +114,7 @@ class TestRevNotPositive(TestError):
         return [(x, -1) if x=="rev" else (x, y) for (x, y) in doc]
 
     def _assert(self):
-        self.assertRaises(_NonPositiveLinkError, self._saros.link_revs)
+        self._assert_with(_NonPositiveLinkError)
 
 class TestLastNotPositive(TestError):
     # tests last <= 0
@@ -115,7 +125,7 @@ class TestLastNotPositive(TestError):
         return [(x, -10) if x=="last" else (x, y) for (x, y) in doc]
 
     def _assert(self):
-        self.assertRaises(_NonPositiveLinkError, self._saros.link_revs)
+        self._assert_with(_NonPositiveLinkError)
 
 class TestLastBelowRev(TestError):
     # tests last < rev
@@ -126,7 +136,7 @@ class TestLastBelowRev(TestError):
         return [(x, 1) if x=="last" else (x, y) for (x, y) in doc]
 
     def _assert(self):
-        self.assertRaises(_LastBelowRevisionError, self._saros.link_revs)
+        self._assert_with(_LastBelowRevisionError)
 
 class TestDuplicate(TestError):
     # tests duplicates
@@ -137,7 +147,7 @@ class TestDuplicate(TestError):
         return [(x, 6) if x=="rev" else (x, y) for (x, y) in doc]
 
     def _assert(self):
-        self.assertRaises(_DuplicateLinkError, self._saros.link_revs)
+        self._assert_with(_DuplicateLinkError)
 
 class TestDecLast(TestError):
     # tests decreasing last
@@ -148,7 +158,7 @@ class TestDecLast(TestError):
         return [(x, 6) if x=="last" else (x, y) for (x, y) in doc]
 
     def _assert(self):
-        self.assertRaises(_DecreasingLastError, self._saros.link_revs)
+        self._assert_with(_DecreasingLastError)
 
 class TestNonConsec(TestError):
     # tests non-consecutive revs
@@ -159,7 +169,7 @@ class TestNonConsec(TestError):
         return [(x, 6) if x=="rev" else (x, y) for (x, y) in doc]
 
     def _assert(self):
-        self.assertRaises(_NonConsecutiveRevisionsError, self._saros.link_revs)
+        self._assert_with(_NonConsecutiveRevisionsError)
 
 class TestMidMissing(TestError):
     # tests missing links in middle
@@ -170,7 +180,7 @@ class TestMidMissing(TestError):
         return [(x, 8) if x=="last" else (x, y) for (x, y) in doc]
 
     def _assert(self):
-        self.assertRaises(_MissingLinksError, self._saros.link_revs)
+        self._assert_with(_MissingLinksError)
 
 class TestEndMissing(TestError):
     # tests missing links @ end
@@ -181,7 +191,7 @@ class TestEndMissing(TestError):
         return [(x, 8) if x=="last" else (x, y) for (x, y) in doc]
 
     def _assert(self):
-        self.assertRaises(_MissingLinksError, self._saros.link_revs)
+        self._assert_with(_MissingLinksError)
 
 
 # `TestError` deleted; else, unittest will run it, & abstract methods will fail.
