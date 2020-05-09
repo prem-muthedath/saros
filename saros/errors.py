@@ -5,15 +5,17 @@
 
 class _LinkError(Exception):
     # represents link error
-    def __init__(self, doc, data):
-        # doc: _Document object
-        # data: `[(rev, last)]` related to error
-        self.__doc=doc
+    def __init__(self, doc_str, data):
+        # doc_str: str() of `_Document` object involved in this error.
+        # data: `[_Link]` related to error.
+        self.__doc_str=doc_str
         self.__data=data
 
     def __str__(self):
         # err msg
-        return self.__doc._str() + ", " + "[(rev, last)] -> " + str(self.__data)
+        data=[x._str() for x in self.__data]
+        data=", ".join(data)
+        return self.__doc_str + ", " + "[(rev, last)] -> [" + data + "]"
 
 class _NonPositiveLinkError(_LinkError):
     # represents `rev` <= 0 or `last` <= 0 in `(rev, last)` error.
