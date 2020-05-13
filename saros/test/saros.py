@@ -79,7 +79,7 @@ class TestError(Test):
     def _setUp(self):
         # set up test data, in addition to Test.setUp()
         # super().setUp() doesn't work because we del(TestError) -- see below
-        # sets up test data that may involve changes to > 1 row in saros db.
+        # test data may involve multiple changes, including > 1 row, to db.
         for (name, rev, field, val) in self._data():
             self._dump(name, rev)
             self._modify(field, val)
@@ -159,10 +159,14 @@ class TestNonConsec(TestError):
     def _assert(self):
         self._assert_with(_NonConsecutiveRevisionsError)
 
-class TestMidMissing(TestError):
-    # tests missing links in middle
+class TestPrevMissing(TestError):
+    # tests missing links in previous chain
     def _data(self):
-        return [("JE02", 6, "last", 8)]
+        return [
+                ("JE00", 1, "last", 5),
+                ("JE00", 2, "last", 5),
+                ("JE00", 3, "last", 5)
+            ]
 
     def _assert(self):
         self._assert_with(_MissingLinksError)
