@@ -11,7 +11,7 @@ from .errors import (_LinkError,
                         _MissingLinksError,
                         )
 
-# module has claases involved in linking revisions of a doc with a given name
+# document module contains classes to link revisions of a doc with a given name
 # ##############################################################################
 
 class _Document:
@@ -113,7 +113,7 @@ class _Link:
 
     def __err_data(self):
         # link's data as a list for error message
-        if self._prev == 0:
+        if self._prev == 0:         # don't report the dummy (0, 0)
             return [(self._rev, self._last)]
         return [(self._prev, self._plast), (self._rev, self._last)]
 
