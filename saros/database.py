@@ -51,7 +51,9 @@ class _SarosDB:
         "JE02-5": [("name", "JE02"), ("rev", 5), ("prev", 0), ("last", 7), ("content", "i am JE02-5")],
         "JE02-6": [("name", "JE02"), ("rev", 6), ("prev", 5), ("last", 7), ("content", "i am JE02-6")],
         "JE02-7": [("name", "JE02"), ("rev", 7), ("prev", 6), ("last", 7), ("content", "i am JE02-7")],
-        "JE03-1": [("name", "JE03"), ("rev", 1), ("prev", 0), ("last", 1), ("content", "i am JE03-1")]
+        "JE03-1": [("name", "JE03"), ("rev", 1), ("prev", 0), ("last", 1), ("content", "i am JE03-1")],
+        "JE04-1": [("name", "JE04"), ("rev", 1), ("prev", 0), ("last", 1), ("content", "i am JE04-1")],
+        "JE04-2": [("name", "JE04"), ("rev", 2), ("prev", 0), ("last", 2), ("content", "i am JE04-2")]
     }
 
     @classmethod
