@@ -79,20 +79,26 @@ class TestError(Test):
     def _setUp(self):
         # set up test data, in addition to Test.setUp()
         # super().setUp() doesn't work because we del(TestError) -- see below
-        self._doc_dump()
+        # sets up test data that may involve changes to > 1 row in saros db.
+        for (name, rev, field, val) in self._data():
+            self._dump(name, rev)
+            self._modify(field, val)
+            _SarosDB()._load(self._file, False)
+
+    def _data(self):
+        # test data: [(name, rev, field, val)]
+        pass
+
+    def _dump(self, name, rev):
+        # saros doc dump
+        _SarosDB()._doc_dump(name, rev, self._file)
+
+    def _modify(self, field, val):
+        # set value of doc data `field` to `val`
         f=_File(self._file)
         doc=f._read()
-        mdoc=self._modified_doc(doc)
+        mdoc=[(x, val) if x==field else (x, y) for (x, y) in doc]
         f._write(mdoc)
-        _SarosDB()._load(self._file, False)
-
-    def _doc_dump(self):
-        # saros doc dump
-        pass
-
-    def _modified_doc(self, doc):
-        # doc with data modified for test
-        pass
 
     def _assert(self):
         # assert expected error
@@ -107,88 +113,64 @@ class TestError(Test):
 
 class TestRevNotPositive(TestError):
     # tests rev <=0
-    def _doc_dump(self):
-        _SarosDB()._doc_dump("JE00", 1, self._file)
-
-    def _modified_doc(self, doc):
-        return [(x, -1) if x=="rev" else (x, y) for (x, y) in doc]
+    def _data(self):
+        return [("JE00", 1, "rev", -1)]
 
     def _assert(self):
         self._assert_with(_NonPositiveLinkError)
 
 class TestLastNotPositive(TestError):
     # tests last <= 0
-    def _doc_dump(self):
-        _SarosDB()._doc_dump("JE00", 2, self._file)
-
-    def _modified_doc(self, doc):
-        return [(x, -10) if x=="last" else (x, y) for (x, y) in doc]
+    def _data(self):
+        return [("JE00", 2, "last", -10)]
 
     def _assert(self):
         self._assert_with(_NonPositiveLinkError)
 
 class TestLastBelowRev(TestError):
     # tests last < rev
-    def _doc_dump(self):
-        _SarosDB()._doc_dump("JE00", 3, self._file)
-
-    def _modified_doc(self, doc):
-        return [(x, 1) if x=="last" else (x, y) for (x, y) in doc]
+    def _data(self):
+        return [("JE00", 3, "last", 1)]
 
     def _assert(self):
         self._assert_with(_LastBelowRevisionError)
 
 class TestDuplicate(TestError):
     # tests duplicates
-    def _doc_dump(self):
-        _SarosDB()._doc_dump("JE02", 7, self._file)
-
-    def _modified_doc(self, doc):
-        return [(x, 6) if x=="rev" else (x, y) for (x, y) in doc]
+    def _data(self):
+        return [("JE02", 7, "rev", 6)]
 
     def _assert(self):
         self._assert_with(_DuplicateLinkError)
 
 class TestDecLast(TestError):
     # tests decreasing last
-    def _doc_dump(self):
-        _SarosDB()._doc_dump("JE02", 6, self._file)
-
-    def _modified_doc(self, doc):
-        return [(x, 6) if x=="last" else (x, y) for (x, y) in doc]
+    def _data(self):
+        return [("JE02", 6, "last", 6)]
 
     def _assert(self):
         self._assert_with(_DecreasingLastError)
 
 class TestNonConsec(TestError):
     # tests non-consecutive revs
-    def _doc_dump(self):
-        _SarosDB()._doc_dump("JE00", 5, self._file)
-
-    def _modified_doc(self, doc):
-        return [(x, 6) if x=="rev" else (x, y) for (x, y) in doc]
+    def _data(self):
+        return [("JE00", 5, "rev", 6)]
 
     def _assert(self):
         self._assert_with(_NonConsecutiveRevisionsError)
 
 class TestMidMissing(TestError):
     # tests missing links in middle
-    def _doc_dump(self):
-        _SarosDB()._doc_dump("JE02", 6, self._file)
-
-    def _modified_doc(self, doc):
-        return [(x, 8) if x=="last" else (x, y) for (x, y) in doc]
+    def _data(self):
+        return [("JE02", 6, "last", 8)]
 
     def _assert(self):
         self._assert_with(_MissingLinksError)
 
 class TestEndMissing(TestError):
     # tests missing links @ end
-    def _doc_dump(self):
-        _SarosDB()._doc_dump("JE03", 1, self._file)
-
-    def _modified_doc(self, doc):
-        return [(x, 8) if x=="last" else (x, y) for (x, y) in doc]
+    def _data(self):
+        return [("JE03", 1, "last", 8)]
 
     def _assert(self):
         self._assert_with(_MissingLinksError)
