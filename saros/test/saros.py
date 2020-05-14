@@ -24,27 +24,20 @@ class Test(unittest.TestCase):
         self._file="test"
 
     def tearDown(self):
-        # reset saros to its original state
-        for (_id, doc) in self._docs:
-            doc=[("id", _id)] + doc
-            _File(self._file)._write(doc)
-            self._load()
+        self._reset()
         self._saros=None
         self_docs=None
         self._file=None
 
     def runTest(self):
         self._header()
-        self._print("BEFORE")
         self._verify()
         self._setUp()
         self._assert()
 
     def _header(self):
+        # test header message
         print "\n -------------------- NEW TEST: " + type(self).__name__ + " --------------------- "
-
-    def _print(self, _str):
-        print("SAROS REPOSITORY STATE " +  _str + ": \n" + self._saros.to_str() + "\n")
 
     def _verify(self):
         # verify that saros db is in it's original state
@@ -56,9 +49,21 @@ class Test(unittest.TestCase):
 
     def _assert(self):
         # assert expected result
+        self._print("BEFORE")
         self._saros.link_revs()
         self._print("AFTER")
         self.assertEqual(self._saros.to_str(), data._expected_repo())
+
+    def _print(self, _str):
+        # formats & prints saros db state as a string.
+        print("SAROS REPOSITORY STATE " +  _str + ": \n" + self._saros.to_str() + "\n")
+
+    def _reset(self):
+        # reset saros db to its original state
+        for (_id, doc) in self._docs:
+            doc=[("id", _id)] + doc
+            _File(self._file)._write(doc)
+            self._load()
 
     def _load(self):
         # load doc data in file to saros db, without linking
@@ -101,6 +106,7 @@ class TestError(Test):
         with self.assertRaises(exception) as cn:
             self._saros.link_revs()
         print "exception: ", type(cn.exception).__name__, " msg: ", cn.exception
+
 
 class TestRevNotPositive(TestError):
     # tests rev <=0
