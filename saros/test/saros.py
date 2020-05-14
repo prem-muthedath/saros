@@ -27,7 +27,7 @@ class Test(unittest.TestCase):
         for (_id, doc) in self._docs:
             doc=[("id", _id)] + doc
             _File(self._file)._write(doc)
-            _SarosDB._load(self._file, False)
+            self._load()
         self._saros=None
         self_docs=None
         self._file=None
@@ -35,15 +35,53 @@ class Test(unittest.TestCase):
     def runTest(self):
         self._header()
         self._print("BEFORE")
-        self._saros.link_revs()
-        self._print("AFTER")
-        self.assertEqual(self._saros.to_str(), self.__expected_repo())
+        self._verify()
+        self._setUp()
+        self._assert()
+
+    def _header(self):
+        print "\n -------------------- NEW TEST: " + type(self).__name__ + " --------------------- "
 
     def _print(self, _str):
         print("SAROS REPOSITORY STATE " +  _str + ": \n" + self._saros.to_str() + "\n")
 
-    def _header(self):
-        print "\n -------------------- NEW TEST: " + type(self).__name__ + " --------------------- "
+    def _verify(self):
+        # verify that saros db is in it's original state
+        self.assertEqual(self._saros.to_str(), self.__orig_repo())
+
+    def _setUp(self):
+        # set up test data, in addition to Test.setUp()
+        pass
+
+    def _assert(self):
+        # assert expected result
+        self._saros.link_revs()
+        self._print("AFTER")
+        self.assertEqual(self._saros.to_str(), self.__expected_repo())
+
+    def __orig_repo(self):
+        return '\n'.join([
+            "JE00-1: [('name', 'JE00'), ('rev', 1), ('prev', 0), ('last', 3), ('content', 'i am JE00-1')]",
+            "JE00-2: [('name', 'JE00'), ('rev', 2), ('prev', 1), ('last', 3), ('content', 'i am JE00-2')]",
+            "JE00-3: [('name', 'JE00'), ('rev', 3), ('prev', 2), ('last', 3), ('content', 'i am JE00-3')]",
+            "JE00-4: [('name', 'JE00'), ('rev', 4), ('prev', 0), ('last', 6), ('content', 'i am JE00-4')]",
+            "JE00-5: [('name', 'JE00'), ('rev', 5), ('prev', 4), ('last', 6), ('content', 'i am JE00-5')]",
+            "JE00-6: [('name', 'JE00'), ('rev', 6), ('prev', 5), ('last', 6), ('content', 'i am JE00-6')]",
+            "JE00-7: [('name', 'JE00'), ('rev', 7), ('prev', 0), ('last', 8), ('content', 'i am JE00-7')]",
+            "JE00-8: [('name', 'JE00'), ('rev', 8), ('prev', 7), ('last', 8), ('content', 'i am JE00-8')]",
+            "JE01-1: [('name', 'JE01'), ('rev', 1), ('prev', 0), ('last', 2), ('content', 'i am JE01-1')]",
+            "JE01-2: [('name', 'JE01'), ('rev', 2), ('prev', 1), ('last', 2), ('content', 'i am JE01-2')]",
+            "JE02-1: [('name', 'JE02'), ('rev', 1), ('prev', 0), ('last', 4), ('content', 'i am JE02-1')]",
+            "JE02-2: [('name', 'JE02'), ('rev', 2), ('prev', 1), ('last', 4), ('content', 'i am JE02-2')]",
+            "JE02-3: [('name', 'JE02'), ('rev', 3), ('prev', 2), ('last', 4), ('content', 'i am JE02-3')]",
+            "JE02-4: [('name', 'JE02'), ('rev', 4), ('prev', 3), ('last', 4), ('content', 'i am JE02-4')]",
+            "JE02-5: [('name', 'JE02'), ('rev', 5), ('prev', 0), ('last', 7), ('content', 'i am JE02-5')]",
+            "JE02-6: [('name', 'JE02'), ('rev', 6), ('prev', 5), ('last', 7), ('content', 'i am JE02-6')]",
+            "JE02-7: [('name', 'JE02'), ('rev', 7), ('prev', 6), ('last', 7), ('content', 'i am JE02-7')]",
+            "JE03-1: [('name', 'JE03'), ('rev', 1), ('prev', 0), ('last', 1), ('content', 'i am JE03-1')]",
+            "JE04-1: [('name', 'JE04'), ('rev', 1), ('prev', 0), ('last', 1), ('content', 'i am JE04-1')]",
+            "JE04-2: [('name', 'JE04'), ('rev', 2), ('prev', 0), ('last', 2), ('content', 'i am JE04-2')]"
+        ])
 
     def __expected_repo(self):
         return '\n'.join([
@@ -69,15 +107,13 @@ class Test(unittest.TestCase):
             "JE04-2: [('name', 'JE04'), ('rev', 2), ('prev', 1), ('last', 2), ('content', 'i am JE04-2')]"
         ])
 
+    def _load(self):
+        # load doc data in file to saros db, without linking
+        _SarosDB()._load(self._file, False)
+
 
 class TestError(Test):
     # base class for error tests
-    def runTest(self):
-        self._header()
-        self._print("BEFORE")
-        self._setUp()
-        self._assert()
-
     def _setUp(self):
         # set up test data, in addition to Test.setUp()
         # super().setUp() doesn't work because we del(TestError) -- see below
@@ -85,7 +121,7 @@ class TestError(Test):
         for (name, rev, field, val) in self._data():
             self._dump(name, rev)
             self._modify(field, val)
-            _SarosDB()._load(self._file, False)
+            self._load()
 
     def _data(self):
         # test data: [(name, rev, field, val)]
