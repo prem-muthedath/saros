@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 from .database import _SarosDB
-from .xml import  _File
+from .xml import _File
 from .error import (_LinkError,
                     _NonPositiveRevisionError,
                     _LastBelowRevisionError,
