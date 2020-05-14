@@ -36,8 +36,14 @@ class Test(unittest.TestCase):
         self._assert()
 
     def _header(self):
-        # test header message
-        print "\n -------------------- NEW TEST: " + type(self).__name__ + " --------------------- "
+        # print test header
+        print " ".join([
+                        "\n",
+                        "--------------------",
+                        "TEST NAME:",
+                        self.__class__.__name__,
+                        "--------------------"
+                    ])
 
     def _verify(self):
         # verify that saros db is in it's original state
@@ -56,7 +62,8 @@ class Test(unittest.TestCase):
 
     def _print(self, _str):
         # formats & prints saros db state as a string.
-        print("SAROS REPOSITORY STATE " +  _str + ": \n" + self._saros.to_str() + "\n")
+        print("SAROS REPOSITORY STATE " +  _str + ": \n" + \
+                self._saros.to_str() + "\n")
 
     def _reset(self):
         # reset saros db to its original state
@@ -105,7 +112,8 @@ class TestError(Test):
         # REF: https://docs.python.org/2/library/unittest.html
         with self.assertRaises(exception) as cn:
             self._saros.link_revs()
-        print "exception: ", type(cn.exception).__name__, " msg: ", cn.exception
+        print "exception: ", cn.exception.__class__.__name__, \
+                "| msg => ", cn.exception
 
 
 class TestRevNotPositive(TestError):
