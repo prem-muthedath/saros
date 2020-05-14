@@ -11,7 +11,7 @@ from .error import (_LinkError,
                     _MissingLinksError,
                     )
 
-# document module contains classes to link revisions of a doc with a given name
+# this module contains classes to link revisions of a doc having a given name
 # ##############################################################################
 
 class _Document:
@@ -59,11 +59,11 @@ class _Document:
 
 
 class _Link:
-    # represents a revision link -- `[(prev, plast), (rev, last)]`
+    # represents a revision link -- `(prev, plast), (rev, last)`
     def __init__(self, (prev, plast), (rev, last)):
         # _prev: previous revision
         # _plast: `last` associated with `_prev`
-        # _rev: this or current revision
+        # _rev: this revision
         # _last: `last` associated with `_rev`
         self._prev, self._plast=(prev, plast)
         self._rev, self._last=(rev, last)
@@ -83,7 +83,7 @@ class _Link:
 
     def _validate(self):
         # validates this link's (self._rev, self._last).
-        # self._prev, self._plast already checked in this link's predecessor
+        # self._prev, self._plast already checked by this link's predecessor
         if self._rev <= 0:
             raise _NonPositiveRevisionError(self.__err_data())
         if self._last < self._rev:
