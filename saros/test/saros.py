@@ -5,13 +5,13 @@ from ..saros import Saros
 from ..database import _SarosDB
 from ..xml import _File
 from . import data
-from ..errors import (_NonPositiveRevisionError,
-                        _LastBelowRevisionError,
-                        _DuplicateRevisionsError,
-                        _DecreasingLastError,
-                        _NonConsecutiveRevisionsError,
-                        _MissingLinksError,
-                        )
+from ..error import (_NonPositiveRevisionError,
+                    _LastBelowRevisionError,
+                    _DuplicateRevisionsError,
+                    _DecreasingLastError,
+                    _NonConsecutiveRevisionsError,
+                    _MissingLinksError,
+                    )
 
 # test module -- contains all unit tests for saros application
 # ##############################################################################

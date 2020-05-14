@@ -2,14 +2,14 @@
 
 from .database import _SarosDB
 from .xml import  _File
-from .errors import (_LinkError,
-                        _NonPositiveRevisionError,
-                        _LastBelowRevisionError,
-                        _DuplicateRevisionsError,
-                        _DecreasingLastError,
-                        _NonConsecutiveRevisionsError,
-                        _MissingLinksError,
-                        )
+from .error import (_LinkError,
+                    _NonPositiveRevisionError,
+                    _LastBelowRevisionError,
+                    _DuplicateRevisionsError,
+                    _DecreasingLastError,
+                    _NonConsecutiveRevisionsError,
+                    _MissingLinksError,
+                    )
 
 # document module contains classes to link revisions of a doc with a given name
 # ##############################################################################
