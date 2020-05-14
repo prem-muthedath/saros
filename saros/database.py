@@ -31,7 +31,7 @@ class _SarosDB:
     #    from any _SarosDB instance are available to all _SarosDB instances.
     # 7. to make (6) work, all methods are class methods, but you can still use 
     #    _SarosDB().method().  ref: https://pythonbasics.org/classmethod/
-    
+
     # __docs = { doc_id: [ ("name", val), ("rev", val), ("prev", val), ("last", val), ("content", val) ] }
     __docs = { # represents the database
         "JE00-1": [("name", "JE00"), ("rev", 1), ("prev", 0), ("last", 3), ("content", "i am JE00-1")],
@@ -63,11 +63,11 @@ class _SarosDB:
         for _id in sorted(cls.__docs):
             data=cls.__doc_data(_id)    # fix for a nasty bug
             dump.append((_id, data))
-        return dump 
+        return dump
 
     @classmethod
     def _doc_names(cls):
-        # list of all unique doc names
+        # list of all unique doc names, sorted by name
         names=[]
         for doc_id in cls.__docs:
             name=cls.__fetch(doc_id, "name")
@@ -98,7 +98,7 @@ class _SarosDB:
     @classmethod
     def _load(cls, _file, link=True):
         # loads xml doc info contained in file named `_file` into the database.
-        # by default, this method updates `last` values for upstream revs.
+        # by default (i.e., `link`=True), updates `last` of upstream revs.
         doc_id=""
         vals=[]
         for (name, val) in _File(_file)._read():
