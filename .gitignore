@@ -7,5 +7,6 @@ exp.py
 !/.gitignore
 !/README.md
 !/saros/
+!/saros/test/
 !/saros/temp/
 !/saros/temp/README.md
