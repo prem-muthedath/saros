@@ -5,9 +5,9 @@ from ..saros import Saros
 from ..database import _SarosDB
 from ..xml import _File
 from . import data
-from ..errors import (_NonPositiveLinkError,
+from ..errors import (_NonPositiveRevisionError,
                         _LastBelowRevisionError,
-                        _DuplicateLinkError,
+                        _DuplicateRevisionsError,
                         _DecreasingLastError,
                         _NonConsecutiveRevisionsError,
                         _MissingLinksError,
@@ -82,7 +82,7 @@ class TestError(Test):
     def _setUp(self):
         # set up test data, in addition to Test.setUp()
         # super().setUp() doesn't work because we del(TestError) -- see below
-        # test data may involve multiple changes, including > 1 row, to db.
+        # test setup may involve multiple changes, including > 1 row, to db.
         for (name, rev, field, val) in self._data():
             self._dump(name, rev)
             self._modify(field, val)
@@ -122,7 +122,7 @@ class TestRevNotPositive(TestError):
         return [("JE00", 1, "rev", -1)]
 
     def _assert(self):
-        self._assert_with(_NonPositiveLinkError)
+        self._assert_with(_NonPositiveRevisionError)
 
 class TestLastNotPositive(TestError):
     # tests last <= 0
@@ -130,7 +130,7 @@ class TestLastNotPositive(TestError):
         return [("JE00", 2, "last", -10)]
 
     def _assert(self):
-        self._assert_with(_NonPositiveLinkError)
+        self._assert_with(_LastBelowRevisionError)
 
 class TestLastBelowRev(TestError):
     # tests last < rev
@@ -143,10 +143,10 @@ class TestLastBelowRev(TestError):
 class TestDuplicate(TestError):
     # tests duplicates
     def _data(self):
-        return [("JE02", 7, "rev", 6)]
+        return [("JE02", 5, "rev", 4)]
 
     def _assert(self):
-        self._assert_with(_DuplicateLinkError)
+        self._assert_with(_DuplicateRevisionsError)
 
 class TestDecLast(TestError):
     # tests decreasing last

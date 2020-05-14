@@ -3,9 +3,9 @@
 from .database import _SarosDB
 from .xml import  _File
 from .errors import (_LinkError,
-                        _NonPositiveLinkError,
+                        _NonPositiveRevisionError,
                         _LastBelowRevisionError,
-                        _DuplicateLinkError,
+                        _DuplicateRevisionsError,
                         _DecreasingLastError,
                         _NonConsecutiveRevisionsError,
                         _MissingLinksError,
@@ -83,12 +83,13 @@ class _Link:
 
     def _validate(self):
         # validates this link's (self._rev, self._last).
-        if self._rev <= 0 or self._last <= 0:
-            raise _NonPositiveLinkError(self.__err_data())
+        # self._prev, self._plast already checked in this link's predecessor
+        if self._rev <= 0:
+            raise _NonPositiveRevisionError(self.__err_data())
         if self._last < self._rev:
             raise _LastBelowRevisionError(self.__err_data())
         if self._rev == self._prev:
-            raise _DuplicateLinkError(self.__err_data())
+            raise _DuplicateRevisionsError(self.__err_data())
         if self._rev != self._prev + 1:
             raise _NonConsecutiveRevisionsError(self.__err_data())
         if self._last < self._plast:

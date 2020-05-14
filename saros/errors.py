@@ -19,24 +19,24 @@ class _LinkError(Exception):
         # err msg
         return self.__header +  ", " + "[(rev, last)] -> " + str(self.__data)
 
-class _NonPositiveLinkError(_LinkError):
-    # represents `rev` <= 0 or `last` <= 0 in `(rev, last)` error.
+class _NonPositiveRevisionError(_LinkError):
+    # represents `rev` <= 0 in `(rev, last)` error.
     pass
 
 class _LastBelowRevisionError(_LinkError):
     # represents `last` < `rev` in `(rev, last)` error.
     pass
 
-class _DuplicateLinkError(_LinkError):
-    # represents duplicate `(rev, last)` error.
+class _DuplicateRevisionsError(_LinkError):
+    # represents `prev`=`rev` in `[(prev, plast), (rev, last)]` error.
     pass
 
 class _DecreasingLastError(_LinkError):
-    # represents `last2` < `last1` in `[(rev1, last1), (rev2, last2)]` error.
+    # represents `last` < `plast` in `[(prev, plast), (rev, last)]` error.
     pass
 
 class _NonConsecutiveRevisionsError(_LinkError):
-    # represents `rev2` != `rev1` + 1 in `[(rev1, last1), (rev2, last2)]` error.
+    # represents `rev` != `prev` + 1 in `[(prev, plast), (rev, last)]` error.
     pass
 
 class _MissingLinksError(_LinkError):
