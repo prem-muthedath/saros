@@ -1,8 +1,8 @@
 #!/usr/bin/python
 
-from .test import saros
+from .test import test
 
 if __name__ == "__main__":
-    saros.main()
+    test.main()
 
 

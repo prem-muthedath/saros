@@ -196,7 +196,7 @@ def main():
     #   1. call this method in saros.__main__.py
     #   2. then run `python -m saros` to execute runTest()
     #   3. ref: https://docs.python.org/2/library/unittest.html#unittest.main
-    unittest.main(module='saros.test.saros')
+    unittest.main(module='saros.test.test')
 
 def suite():
     # runs tests as test suite.
