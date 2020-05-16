@@ -21,13 +21,13 @@ class Test(unittest.TestCase):
     def setUp(self):
         self._saros=Saros()
         self._docs=_SarosDB()._dump()
-        self._file="test"
+        self._fname="test"   # file name
 
     def tearDown(self):
         self._reset()
         self._saros=None
         self_docs=None
-        self._file=None
+        self._fname=None
 
     def runTest(self):
         self._header()
@@ -69,12 +69,12 @@ class Test(unittest.TestCase):
         # reset saros db to its original state
         for (_id, doc) in self._docs:
             doc=[("id", _id)] + doc
-            _File(self._file)._write(doc)
+            _File(self._fname)._write(doc)
             self._load()
 
     def _load(self):
         # load doc data in file to saros db, without linking
-        _SarosDB()._load(self._file, False)
+        _SarosDB()._load(self._fname, False)
 
 
 class TestError(Test):
@@ -94,11 +94,11 @@ class TestError(Test):
 
     def _dump(self, name, rev):
         # saros doc dump
-        _SarosDB()._doc_dump(name, rev, self._file)
+        _SarosDB()._doc_dump(name, rev, self._fname)
 
     def _modify(self, field, val):
         # set value of doc data `field` to `val`
-        f=_File(self._file)
+        f=_File(self._fname)
         doc=f._read()
         mdoc=[(x, val) if x==field else (x, y) for (x, y) in doc]
         f._write(mdoc)
