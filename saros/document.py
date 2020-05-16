@@ -22,27 +22,29 @@ class _Document:
 
     def _link_revs(self):
         # links all unlinked revs of `self.__name` to form a single rev chain.
-        # it spins through the revision chain, setting up objects to link 
-        # revision pairs, and invoking `_link()` on them.
+        # it spins through the revision chain, setting up link objects of 
+        # revision pairs, & fixes any broken links.
         # `_EndLink` handles checks @ end of rev chain that `_Link` can't.
         rev_chain=self.__saros_rev_chain()  # doc's `[(rev, last)]` from db
         dummy=(0,0)                         # dummy
         end=len(rev_chain)-1                # end index
         for i, this in enumerate(rev_chain):
+            prev=dummy if i==0 else rev_chain[i-1]
+            link=_EndLink(prev, this) if i==end else _Link(prev, this)
             try:
-                prev=dummy if i==0 else rev_chain[i-1]
-                link=_EndLink(prev, this) if i==end else _Link(prev, this)
-                link._link(self)
+                if link._is_broken():
+                    prev, rev=(i, i+1)    # `i` starts @ 0, so rev = i+1
+                    self.__dump_file(rev)._link(prev, _SarosDB())
             except _LinkError as e:
                 e._add_header(self.__err_str())
                 raise e
 
-    def _dump_file_name(self, rev):
-        # creates dump file & returns it's name.
+    def __dump_file(self, rev):
+        # returns dump file associated with `rev`.
         # dump file holds saros db dump of doc with `self.__name` & `rev`.
         fname=self.__name+"-"+str(rev)      # file name
         _SarosDB()._doc_dump(self.__name, rev, fname)
-        return fname
+        return _File(fname)
 
     def __saros_rev_chain(self):
         # Saros revision chain for doc `self.__name`, sorted by `rev`.
@@ -68,21 +70,17 @@ class _Link:
         self._prev, self._plast=(prev, plast)
         self._rev, self._last=(rev, last)
 
-    def _link(self, doc):
-        # if unlinked -- i.e., broken -- then links itself.
+    def _is_broken(self):
+        # this routine checks if this link, if valid, is broken.
         # revisions are linked if their `last` is same as their prev's `last`.
-        # this routine links `self._rev` to `self_prev`
-        # doc revisions start from 1, so we only link when `_self._rev` > 1.
+        # link with `self._rev`= 1 is unbroken, as doc revisions start from 1.
         self._validate()
-        if self._rev <= 1: return
-        linked = self._last == self._plast
-        if not linked:
-            fname=doc._dump_file_name(self._rev)    # file name
-            _File(fname)._link(self._prev, _SarosDB())
+        if self._rev <= 1: return False
+        return self._last != self._plast
 
     def _validate(self):
         # validates this link's (self._rev, self._last).
-        # self._prev, self._plast already checked by this link's predecessor
+        # this link's predecessor has already checked (self._prev, self._plast).
         if self._rev <= 0:
             raise _NonPositiveRevisionError(self.__err_data())
         if self._last < self._rev:
