@@ -74,11 +74,11 @@ class _Link:
         # this routine checks if this link, if valid, is broken.
         # revisions are linked if their `last` is same as their prev's `last`.
         # link with `self._rev`= 1 is unbroken, as doc revisions start from 1.
-        self._validate()
+        self.__validate()
         if self._rev <= 1: return False
         return self._last != self._plast
 
-    def _validate(self):
+    def __validate(self):
         # validates this link's (self._rev, self._last).
         # this link's predecessor has already checked (self._prev, self._plast).
         if self._rev <= 0:
@@ -91,23 +91,10 @@ class _Link:
             raise _NonConsecutiveRevisionsError(self.__err_data())
         if self._last < self._plast:
             raise _DecreasingLastError(self.__err_data())
-        if self._incomplete_prev():
-            raise _MissingLinksError(self._missing_prev())
+        if self.__incomplete_prev():
+            raise _MissingLinksError(self.__missing_prev())
         if self._incomplete_end():
             raise _MissingLinksError(self._missing_end())
-
-    def _incomplete_prev(self):
-        # checks if link's (self._prev, self._plast)` chain is incomplete.
-        # this happens when a broken link's `self._prev` < `self._plast`.
-        if self._plast < self._last:
-            return len(self._missing_prev()) > 0
-        return False
-
-    def _incomplete_end(self):
-        # checks if end-link's (self._rev, self._last)` chain is incomplete.
-        # this happens when end-link's `self._rev` <  `self._last`.
-        # `_Link` objects are never the end link, so returns `False`.
-        return False
 
     def __err_data(self):
         # link's data as a list for error message
@@ -115,9 +102,22 @@ class _Link:
             return [(self._rev, self._last)]
         return [(self._prev, self._plast), (self._rev, self._last)]
 
-    def _missing_prev(self):
+    def __incomplete_prev(self):
+        # checks if link's (self._prev, self._plast)` chain is incomplete.
+        # this happens when a broken link's `self._prev` < `self._plast`.
+        if self._plast < self._last:
+            return len(self.__missing_prev()) > 0
+        return False
+
+    def __missing_prev(self):
         # missing `[(rev, last)]` between `self._prev` & `self._plast`.
         return [(x, self._plast) for x in range(self._prev+1, self._plast+1)]
+
+    def _incomplete_end(self):
+        # checks if end-link's (self._rev, self._last)` chain is incomplete.
+        # this happens when end-link's `self._rev` <  `self._last`.
+        # `_Link` objects are never the end link, so returns `False`.
+        return False
 
     def _missing_end(self):
         # end-link's missing `[(rev, last)]` between `self._rev` & `self._last`
