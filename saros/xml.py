@@ -105,7 +105,12 @@ class _File:
         # xml file extension
         return ".xml"
 
-    def _update(self, prev):
+    def _link(self, prev, db):
+        # link doc represented by this file to `prev`
+        self.__update(prev)
+        db._load(self.__name)
+
+    def __update(self, prev):
         # updates `prev` value in xml file
         doc=[]
         for (name, val) in self._read():

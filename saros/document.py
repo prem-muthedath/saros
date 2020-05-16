@@ -37,12 +37,12 @@ class _Document:
                 e._add_header(self.__err_str())
                 raise e
 
-    def _dump_file(self, rev):
-        # `_file`: name of file.
-        # `_file` holds saros db dump of doc with `self.__name` & `rev`.
-        _file=self.__name+"-"+str(rev)          # file name
-        _SarosDB()._doc_dump(self.__name, rev, _file)
-        return _file
+    def _dump_file_name(self, rev):
+        # creates dump file & returns it's name.
+        # dump file holds saros db dump of doc with `self.__name` & `rev`.
+        fname=self.__name+"-"+str(rev)      # file name
+        _SarosDB()._doc_dump(self.__name, rev, fname)
+        return fname
 
     def __saros_rev_chain(self):
         # Saros revision chain for doc `self.__name`, sorted by `rev`.
@@ -77,9 +77,8 @@ class _Link:
         if self._rev <= 1: return
         linked = self._last == self._plast
         if not linked:
-            _file=doc._dump_file(self._rev)         # file name
-            _File(_file)._update(self._prev)        # update prev value
-            _SarosDB()._load(_file)
+            fname=doc._dump_file_name(self._rev)    # file name
+            _File(fname)._link(self._prev, _SarosDB())
 
     def _validate(self):
         # validates this link's (self._rev, self._last).
