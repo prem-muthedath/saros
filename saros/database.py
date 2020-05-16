@@ -26,10 +26,12 @@ class _SarosDB:
     # 5. each row should have valid "prev" & "last" values; if not, we'll have 
     #    broken revision chains.  Saros database, however, does not enforce this 
     #    rule, so any broken revision links must be fixed thru a data update.
-    # 6. the database -- __docs (see below) -- is modeled as a class variable, 
+    #
+    # DESIGN:
+    # 1. the database -- __docs (see below) -- is modeled as a class variable, 
     #    so that all _SarosDB instances share the same data, & database updates 
     #    from any _SarosDB instance are available to all _SarosDB instances.
-    # 7. to make (6) work, all methods are class methods, but you can still use 
+    # 2. to make (1) work, all methods are class methods, but you can still use 
     #    _SarosDB().method().  ref: https://pythonbasics.org/classmethod/
 
     # __docs = { doc_id: [ ("name", val), ("rev", val), ("prev", val), ("last", val), ("content", val) ] }
@@ -59,6 +61,7 @@ class _SarosDB:
     @classmethod
     def _dump(cls):
         # dump of all docs & their `id`s, sorted by `id`
+        # returns [(doc_id, doc_data)], where doc_data=[(column, value)]
         dump=[]
         for _id in sorted(cls.__docs):
             data=cls.__doc_data(_id)    # fix for a nasty bug
