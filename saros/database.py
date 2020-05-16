@@ -88,20 +88,20 @@ class _SarosDB:
         return last_revs
 
     @classmethod
-    def _doc_dump(cls, name, rev, _file):
-        # dumps doc named `name`, revision `rev` as xml into file named `_file`
+    def _doc_dump(cls, name, rev, fname):
+        # dumps doc named `name`, revision `rev` as xml into file named `fname`
         doc_id=cls.__doc_id(name, rev)
         data=cls.__doc_data(doc_id)    # fixed to avoid potential nasty bugs
         doc=[("id", doc_id)] + data
-        _File(_file)._write(doc)
+        _File(fname)._write(doc)
 
     @classmethod
-    def _load(cls, _file, link=True):
-        # loads xml doc info contained in file named `_file` into the database.
+    def _load(cls, fname, link=True):
+        # loads xml doc info contained in file named `fname` into the database.
         # by default (i.e., `link`=True), updates `last` of upstream revs.
         doc_id=""
         vals=[]
-        for (name, val) in _File(_file)._read():
+        for (name, val) in _File(fname)._read():
             if name=="id":
                  doc_id=val
             else:
