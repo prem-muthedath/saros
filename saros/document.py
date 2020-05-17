@@ -33,14 +33,16 @@ class _Document:
             link=_EndLink(prev, this) if i==end else _Link(prev, this)
             try:
                 if link._is_broken():
-                    prev, rev=(i, i+1)    # `i` starts @ 0, so rev = i+1
-                    self.__dump_file(rev)._link(prev, _SarosDB())
+                    # NOTE: at this point, `_Link` objects have verified we've 
+                    # valid, consecutive revisions, given by [1, ..., i+1].
+                    prev_rev, this_rev=(i, i+1)    # `i`>=0, so this_rev = i+1
+                    self.__dump_file(this_rev)._link(prev_rev, _SarosDB())
             except _LinkError as e:
                 e._add_header(self.__err_str())
                 raise e
 
     def __dump_file(self, rev):
-        # returns dump file associated with `rev`.
+        # returns dump file associated with revision `rev`.
         # dump file holds saros db dump of doc with `self.__name` & `rev`.
         fname=self.__name+"-"+str(rev)      # file name
         _SarosDB()._doc_dump(self.__name, rev, fname)
@@ -80,7 +82,10 @@ class _Link:
 
     def __validate(self):
         # validates this link's (self._rev, self._last).
-        # this link's predecessor has already checked (self._prev, self._plast).
+        # we don't check (self._prev, self._plast) here because:
+        #   1. when `self._rev` > 1, the link's predecessor checks them.
+        #   2. when `self._rev` = 1, we've the dummy, (0,0), a programming 
+        #      trick, which we need not validate, since saros db has no dummy.
         if self._rev <= 0:
             raise _NonPositiveRevisionError(self.__err_data())
         if self._last < self._rev:
