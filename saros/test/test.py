@@ -160,7 +160,11 @@ class TestDecLast(TestError):
 class TestNonConsec(TestError):
     # tests non-consecutive revs
     def _data(self):
-        return [("JE00", 5, "rev", 6)]
+        return [
+                ("JE00", 5, "rev", 7),
+                ("JE00", 6, "rev", 8),
+                ("JE00", 7, "rev", 6)
+            ]
 
     def _assert(self):
         self._assert_with(_NonConsecutiveRevisionsError)
