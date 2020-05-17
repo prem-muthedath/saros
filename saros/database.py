@@ -124,15 +124,18 @@ class _SarosDB:
     @classmethod
     def __update_last(cls, doc_id):
         # doc_id -> id of doc whose revision link has just been updated.
-        # for all revs of doc whose name `name` ~ as `name` of doc associated 
-        # with doc_id & whose "last" < "last" of doc associated with doc_id, 
-        # replace "last" with "last" of the just updated link.
+        # name -> name associated with `doc_id`
+        # rev -> revision associated with `doc_id`
+        # last -> last associated with `doc_id`
+        #
+        # for all revs of doc named `name`, update `last` if `_rev` < `rev`
         last=cls.__fetch(doc_id, "last")
         name=cls.__fetch(doc_id, "name")
-        for (_rev, _last) in cls._last_revs(name):
+        rev=cls.__fetch(doc_id, "rev")
+        for (_rev, _) in cls._last_revs(name):
+            if _rev >= rev: continue    # fix for a nasty bug
             _id=cls.__doc_id(name, _rev)
-            if _last < last and _id != doc_id:
-                cls.__put(_id, "last", last)
+            cls.__put(_id, "last", last)
 
     @classmethod
     def __doc_id(cls, name, rev):

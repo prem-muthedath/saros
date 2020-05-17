@@ -112,6 +112,7 @@ class TestError(Test):
         # REF: https://docs.python.org/2/library/unittest.html
         with self.assertRaises(exception) as cn:
             self._saros.link_revs()
+        self._print("AFTER")
         print "exception: ", cn.exception.__class__.__name__, \
                 "| msg => ", cn.exception
 
