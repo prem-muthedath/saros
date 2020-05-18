@@ -104,7 +104,7 @@ def _last_not_positive():
     ])
 
 def _last_below_rev():
-    # saros db state when last <= rev, as a string.
+    # saros db state when last < rev, as a string.
     return '\n'.join([
         "JE00-1: [('name', 'JE00'), ('rev', 1), ('prev', 0), ('last', 3), ('content', 'i am JE00-1')]",
         "JE00-2: [('name', 'JE00'), ('rev', 2), ('prev', 1), ('last', 3), ('content', 'i am JE00-2')]",
