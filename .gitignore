@@ -1,12 +1,12 @@
-# ignore evrything except *.py anywhere, .gitignore & README under project root
-# under /saros/temp/, include README, but none other.
-# exclude exp.py under root
+# ignore everything, everywhere.
+# under project root, include .gitignore.
+# include README everywhere.
+# include *.py everywhere except under project root.
 /**
-!*.py
-exp.py
 !/.gitignore
-!/README.md
+!README.md
+!*.py
+/*.py
 !/saros/
 !/saros/test/
 !/saros/temp/
-!/saros/temp/README.md
