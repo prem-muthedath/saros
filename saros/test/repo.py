@@ -1,9 +1,9 @@
 #!/usr/bin/python
 
-# data module contains saros db data needed for unit tests.
+# repo module contains saros db (i.e., the repo) states needed for unit tests.
 # ##############################################################################
 
-def _orig_repo():
+def _orig():
     # original -- i.e., before revision linking -- saros db state as a string.
     return '\n'.join([
         "JE00-1: [('name', 'JE00'), ('rev', 1), ('prev', 0), ('last', 3), ('content', 'i am JE00-1')]",
@@ -28,7 +28,7 @@ def _orig_repo():
         "JE04-2: [('name', 'JE04'), ('rev', 2), ('prev', 0), ('last', 2), ('content', 'i am JE04-2')]"
     ])
 
-def _expected_repo():
+def _expected():
     # expected saros db state, after revision linking, as a string.
     return '\n'.join([
         "JE00-1: [('name', 'JE00'), ('rev', 1), ('prev', 0), ('last', 8), ('content', 'i am JE00-1')]",
@@ -53,7 +53,7 @@ def _expected_repo():
         "JE04-2: [('name', 'JE04'), ('rev', 2), ('prev', 1), ('last', 2), ('content', 'i am JE04-2')]"
     ])
 
-def _rev_not_positive_repo():
+def _rev_not_positive():
     # saros db state when rev <= 0, as a string.
     return '\n'.join([
         "JE00-1: [('name', 'JE00'), ('rev', -1), ('prev', 0), ('last', 3), ('content', 'i am JE00-1')]", ###
@@ -78,7 +78,7 @@ def _rev_not_positive_repo():
         "JE04-2: [('name', 'JE04'), ('rev', 2), ('prev', 0), ('last', 2), ('content', 'i am JE04-2')]"
     ])
 
-def _last_not_positive_repo():
+def _last_not_positive():
     # saros db state when last <= 0, as a string.
     return '\n'.join([
         "JE00-1: [('name', 'JE00'), ('rev', 1), ('prev', 0), ('last', 3), ('content', 'i am JE00-1')]",
@@ -103,7 +103,7 @@ def _last_not_positive_repo():
         "JE04-2: [('name', 'JE04'), ('rev', 2), ('prev', 0), ('last', 2), ('content', 'i am JE04-2')]"
     ])
 
-def _last_below_rev_repo():
+def _last_below_rev():
     # saros db state when last <= rev, as a string.
     return '\n'.join([
         "JE00-1: [('name', 'JE00'), ('rev', 1), ('prev', 0), ('last', 3), ('content', 'i am JE00-1')]",
@@ -128,7 +128,7 @@ def _last_below_rev_repo():
         "JE04-2: [('name', 'JE04'), ('rev', 2), ('prev', 0), ('last', 2), ('content', 'i am JE04-2')]"
     ])
 
-def _duplicate_repo():
+def _duplicate():
     # saros db state with duplicate revisions, as a string.
     return '\n'.join([
         "JE00-1: [('name', 'JE00'), ('rev', 1), ('prev', 0), ('last', 8), ('content', 'i am JE00-1')]",
@@ -153,7 +153,7 @@ def _duplicate_repo():
         "JE04-2: [('name', 'JE04'), ('rev', 2), ('prev', 0), ('last', 2), ('content', 'i am JE04-2')]"
     ])
 
-def _dec_last_repo():
+def _dec_last():
     # saros db state when plast < last -- i.e., decreasing last -- as a string.
     return '\n'.join([
         "JE00-1: [('name', 'JE00'), ('rev', 1), ('prev', 0), ('last', 8), ('content', 'i am JE00-1')]",
@@ -178,7 +178,7 @@ def _dec_last_repo():
         "JE04-2: [('name', 'JE04'), ('rev', 2), ('prev', 0), ('last', 2), ('content', 'i am JE04-2')]"
     ])
 
-def _non_consec_repo():
+def _non_consec():
     # saros db state when revisions are not consecutive, as a string.
     return '\n'.join([
         "JE00-1: [('name', 'JE00'), ('rev', 1), ('prev', 0), ('last', 6), ('content', 'i am JE00-1')]",
@@ -203,7 +203,7 @@ def _non_consec_repo():
         "JE04-2: [('name', 'JE04'), ('rev', 2), ('prev', 0), ('last', 2), ('content', 'i am JE04-2')]"
     ])
 
-def _prev_missing_repo():
+def _prev_missing():
     # saros db state when previous revisions are missing, as a string.
     return '\n'.join([
         "JE00-1: [('name', 'JE00'), ('rev', 1), ('prev', 0), ('last', 5), ('content', 'i am JE00-1')]", ###
@@ -228,7 +228,7 @@ def _prev_missing_repo():
         "JE04-2: [('name', 'JE04'), ('rev', 2), ('prev', 0), ('last', 2), ('content', 'i am JE04-2')]"
     ])
 
-def _end_missing_repo():
+def _end_missing():
     # saros db state when end revisions are missing, as a string.
     return '\n'.join([
         "JE00-1: [('name', 'JE00'), ('rev', 1), ('prev', 0), ('last', 8), ('content', 'i am JE00-1')]",

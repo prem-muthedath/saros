@@ -4,7 +4,7 @@ import unittest
 from ..saros import Saros
 from ..database import _SarosDB
 from ..xml import _File
-from . import data
+from . import repo
 from ..error import (_NonPositiveRevisionError,
                     _LastBelowRevisionError,
                     _DuplicateRevisionsError,
@@ -47,7 +47,7 @@ class Test(unittest.TestCase):
 
     def _verify(self):
         # verify that saros db is in it's original state
-        self.assertEqual(self._saros.to_str(), data._orig_repo())
+        self.assertEqual(self._saros.to_str(), repo._orig())
 
     def _setUp(self):
         # set up test data, in addition to Test.setUp()
@@ -58,7 +58,7 @@ class Test(unittest.TestCase):
         self._print("BEFORE")
         self._saros.link_revs()
         self._print("AFTER")
-        self.assertEqual(self._saros.to_str(), data._expected_repo())
+        self.assertEqual(self._saros.to_str(), repo._expected())
 
     def _print(self, _str):
         # formats & prints saros db state as a string.
@@ -123,7 +123,7 @@ class TestRevNotPositive(TestError):
         return [("JE00", 1, "rev", -1)]
 
     def _assert(self):
-        self._assert_with(_NonPositiveRevisionError, data._rev_not_positive_repo)
+        self._assert_with(_NonPositiveRevisionError, repo._rev_not_positive)
 
 class TestLastNotPositive(TestError):
     # tests last <= 0
@@ -131,7 +131,7 @@ class TestLastNotPositive(TestError):
         return [("JE00", 2, "last", -10)]
 
     def _assert(self):
-        self._assert_with(_LastBelowRevisionError, data._last_not_positive_repo)
+        self._assert_with(_LastBelowRevisionError, repo._last_not_positive)
 
 class TestLastBelowRev(TestError):
     # tests last < rev
@@ -139,7 +139,7 @@ class TestLastBelowRev(TestError):
         return [("JE00", 3, "last", 1)]
 
     def _assert(self):
-        self._assert_with(_LastBelowRevisionError, data._last_below_rev_repo)
+        self._assert_with(_LastBelowRevisionError, repo._last_below_rev)
 
 class TestDuplicate(TestError):
     # tests duplicates
@@ -147,7 +147,7 @@ class TestDuplicate(TestError):
         return [("JE02", 5, "rev", 4)]
 
     def _assert(self):
-        self._assert_with(_DuplicateRevisionsError, data._duplicate_repo)
+        self._assert_with(_DuplicateRevisionsError, repo._duplicate)
 
 class TestDecLast(TestError):
     # tests decreasing last
@@ -155,7 +155,7 @@ class TestDecLast(TestError):
         return [("JE02", 6, "last", 6)]
 
     def _assert(self):
-        self._assert_with(_DecreasingLastError, data._dec_last_repo)
+        self._assert_with(_DecreasingLastError, repo._dec_last)
 
 class TestNonConsec(TestError):
     # tests non-consecutive revs
@@ -167,7 +167,7 @@ class TestNonConsec(TestError):
             ]
 
     def _assert(self):
-        self._assert_with(_NonConsecutiveRevisionsError, data._non_consec_repo)
+        self._assert_with(_NonConsecutiveRevisionsError, repo._non_consec)
 
 class TestPrevMissing(TestError):
     # tests missing links in previous chain
@@ -179,7 +179,7 @@ class TestPrevMissing(TestError):
             ]
 
     def _assert(self):
-        self._assert_with(_MissingLinksError, data._prev_missing_repo)
+        self._assert_with(_MissingLinksError, repo._prev_missing)
 
 class TestEndMissing(TestError):
     # tests missing links @ end
@@ -187,7 +187,7 @@ class TestEndMissing(TestError):
         return [("JE03", 1, "last", 8)]
 
     def _assert(self):
-        self._assert_with(_MissingLinksError, data._end_missing_repo)
+        self._assert_with(_MissingLinksError, repo._end_missing)
 
 
 # `TestError` deleted; else, unittest will run it.
