@@ -8,5 +8,6 @@
 !*.py
 /*.py
 !/saros/
+!/saros/database
 !/saros/test/
 !/saros/temp/
