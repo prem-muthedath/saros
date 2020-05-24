@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-# error module -- contains all exceptions classes in saros application
+# error module -- contains all exceptions classes in saros application.
 # ##############################################################################
 
 class _FileParseError(Exception):
@@ -11,7 +11,7 @@ class _FileParseError(Exception):
         # `col`: db column related to error.
         # `doc`: parsed data from `fname`, as a [(name, val), ..., (name, val)]
         self._schema=schema
-        self.fname=fname
+        self._fname=fname
         self._col=col
         self._doc=doc
 
@@ -29,27 +29,27 @@ class _FileParseError(Exception):
 
     def __fdata(self):
         # file name, formatted for err msg.
-        return "\n => problem file: \n  " + self.fname
+        return "\n => problem file: \n  " + self._fname
 
     def __cdata(self):
-        # db column details, as a str.
+        # db column details, as str.
         return "\n => error @ valid db column " + \
                 "(col name, data type, schema-position):\n  " + \
                 self._col.__str__()
 
     def __pdata(self):
-        # parsed file data, with additional details, in a string format.
+        # parsed file data, with additional details, in string format.
         data=[self.__grp(x, y, i) for i, (x, y) in enumerate(self._doc)]
         return "\n => parsed file data as " + \
                 "(col name, val, type, position):\n  " + ",\n  ".join(data)
 
     def __grp(self, x, y, z):
-        # `(name, val, data_type, position)` as a str.
+        # `(name, val, data_type, position)` as str.
         grp=(x, y, type(y), z)
         return str(grp)
 
     def __sdata(self):
-        # db schema, in a string format.
+        # db schema, in string format.
         return "\n => FYI - valid db schema (col name, type, position):\n  " + \
                 ",\n  ".join([i.__str__() for i in self._schema])
 
