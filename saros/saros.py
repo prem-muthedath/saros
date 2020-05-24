@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-from .database import _SarosDB
+from .database.database import _SarosDB
 from .document import _Document
 
 # Prem: this code, written in python, links document revisions in Saros, a

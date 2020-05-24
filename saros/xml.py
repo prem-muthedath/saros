@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
 import os
+from .database.schema import _Schema
 
 # this module contains private classes that do back-and-forth conversion between 
 # a (name, value) pair & its XML element representation -- <name>value</name>
@@ -114,9 +115,20 @@ class _File:
         # updates `prev` value in xml file
         doc=[]
         for (name, val) in self._read():
-            if name == "prev":
+            if name == _Schema.prev.name:
                 val=prev_rev
             doc.append((name, val))
         self._write(doc)
+
+    def _parse(self, schema):
+        # parse file as per schema
+        doc=self._read()
+        for col in schema:
+            col._validate(doc, self.__full_name())
+        return doc
+
+    def __str__(self):
+        # full file name as a string.
+        return self.__full_name()
 
 

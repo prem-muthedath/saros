@@ -1,19 +1,25 @@
 #!/usr/bin/python
 
 import unittest
+
 from ..saros import Saros
-from ..database import _SarosDB
+from ..database.database import _SarosDB
+from ..database.schema import _Schema
 from ..xml import _File
 from . import repo
-from ..error import (_NonPositiveRevisionError,
-                    _LastBelowRevisionError,
-                    _DuplicateRevisionsError,
-                    _DecreasingLastError,
-                    _NonConsecutiveRevisionsError,
-                    _MissingLinksError,
+from ..error import (_DuplicateColumnError,
+                        _ColumnMismatchError,
+                        _BadDataTypeError,
+                        _BadNameError,
+                        _BadRevisionError,
+                        _BadIdError,
+                        _BadPrevError,
+                        _BadLastError,
+                        _SchemaSizeMismatchError,
+                        _NoSuchDocId,
                     )
 
-# test module -- contains all unit tests for saros application
+# test module -- contains all unit tests for saros application.
 # ##############################################################################
 
 class Test(unittest.TestCase):
@@ -32,7 +38,6 @@ class Test(unittest.TestCase):
     def runTest(self):
         self._header()
         self._verify()
-        self._setUp()
         self._assert()
 
     def _header(self):
@@ -48,10 +53,6 @@ class Test(unittest.TestCase):
     def _verify(self):
         # verify that saros db is in it's original state
         self.assertEqual(self._saros.to_str(), repo._orig())
-
-    def _setUp(self):
-        # set up test data, in addition to Test.setUp()
-        pass
 
     def _assert(self):
         # assert expected result
@@ -79,116 +80,158 @@ class Test(unittest.TestCase):
 
 class TestError(Test):
     # base class for error tests
-    def _setUp(self):
-        # set up test data, in addition to Test.setUp()
-        # super().setUp() doesn't work because we del(TestError) -- see below
-        # test setup may involve multiple changes, including > 1 row, to db.
-        for (name, rev, field, val) in self._data():
-            self._dump(name, rev)
-            self._modify(field, val)
-            self._load()
-
-    def _data(self):
-        # test data: [(name, rev, field, val)]
-        pass
-
-    def _dump(self, name, rev):
-        # saros doc dump
-        _SarosDB()._doc_dump(name, rev, self._fname)
-
-    def _modify(self, field, val):
-        # set value of doc data `field` to `val`
-        f=_File(self._fname)
-        doc=f._read()
-        mdoc=[(x, val) if x==field else (x, y) for (x, y) in doc]
-        f._write(mdoc)
-
     def _assert(self):
         # assert expected error
         pass
 
-    def _assert_with(self, exception, expected_repo):
+    def _assert_with(self, exception):
         # assert with expected error, expected repo after error.
         # REF: https://docs.python.org/2/library/unittest.html
         with self.assertRaises(exception) as cn:
-            self._saros.link_revs()
+            self._run()
         print "exception: ", cn.exception.__class__.__name__, \
                 "| msg => ", cn.exception
-        self.assertEqual(self._saros.to_str(), expected_repo())
+        self.assertEqual(self._saros.to_str(), repo._orig())
 
+    def _run(self):
+        # generic `run` method for all tests.
+        self._dump()
+        self._modify()
+        self._load()
 
-class TestRevNotPositive(TestError):
-    # tests rev <=0
     def _data(self):
-        return [("JE00", 1, "rev", -1)]
+        # returns (name, rev, field, val)
+        pass
 
-    def _assert(self):
-        self._assert_with(_NonPositiveRevisionError, repo._rev_not_positive)
+    def _dump(self, ):
+        # saros doc dump
+        name, rev, _, _  = self._data()
+        _SarosDB()._doc_dump(name, rev, self._fname)
 
-class TestLastNotPositive(TestError):
-    # tests last <= 0
-    def _data(self):
-        return [("JE00", 2, "last", -10)]
+    def _modify(self):
+        # modify doc dump.
+        f=_File(self._fname)
+        doc=f._read()
+        mdoc=self._modify_doc(doc)
+        f._write(mdoc)
 
-    def _assert(self):
-        self._assert_with(_LastBelowRevisionError, repo._last_not_positive)
+    def _modify_doc(self, doc):
+        # default implementation.
+        # set value of doc data `field` to `val`
+        _, _, field, val = self._data()
+        return [(x, val) if x==field.name else (x, y) for (x, y) in doc]
 
-class TestLastBelowRev(TestError):
-    # tests last < rev
-    def _data(self):
-        return [("JE00", 3, "last", 1)]
-
-    def _assert(self):
-        self._assert_with(_LastBelowRevisionError, repo._last_below_rev)
 
 class TestDuplicate(TestError):
-    # tests duplicates
     def _data(self):
-        return [("JE02", 5, "rev", 4)]
+        return ("JE00", 2, None, None)
+
+    def _modify_doc(self, doc):
+        doc.append((_Schema.last.name, 15))
+        return doc
 
     def _assert(self):
-        self._assert_with(_DuplicateRevisionsError, repo._duplicate)
+        self._assert_with(_DuplicateColumnError)
 
-class TestDecLast(TestError):
-    # tests decreasing last
+class TestEmptyFile(TestError):
     def _data(self):
-        return [("JE02", 6, "last", 6)]
+        return ("JE00", 4, None, None)
+
+    def _modify_doc(self, doc):
+        return []
 
     def _assert(self):
-        self._assert_with(_DecreasingLastError, repo._dec_last)
+        self._assert_with(_ColumnMismatchError)
 
-class TestNonConsec(TestError):
-    # tests non-consecutive revs
+class TestMissingColumn(TestError):
     def _data(self):
-        return [
-                ("JE00", 5, "rev", 7),
-                ("JE00", 6, "rev", 8),
-                ("JE00", 7, "rev", 6)
+        return ("JE00", 4, None, None)
+
+    def _modify_doc(self, doc):
+        return [(x, y) for i, (x, y) in enumerate(doc) if i != 3]
+
+    def _assert(self):
+        self._assert_with(_ColumnMismatchError)
+
+class TestBadFieldOrder(TestError):
+    def _data(self):
+        return ("JE00", 4, None, None)
+
+    def _modify_doc(self, doc):
+        return doc[::-1]    # reversed doc contents
+
+    def _assert(self):
+        self._assert_with(_ColumnMismatchError)
+
+class TestBadType(TestError):
+    def _data(self):
+        return ("JE00", 4, _Schema.rev, "prem")
+
+    def _assert(self):
+        self._assert_with(_BadDataTypeError)
+
+class TestBadName(TestError):
+    def _data(self):
+        return ("JE00", 4, _Schema.name, " ")
+
+    def _assert(self):
+        self._assert_with(_BadNameError)
+
+class TestBadRevision(TestError):
+    def _data(self):
+        return ("JE00", 4, _Schema.rev, 0)
+
+    def _assert(self):
+        self._assert_with(_BadRevisionError)
+
+class TestBadId(TestError):
+    def _data(self):
+        return ("JE02", 2, _Schema.id, "JE02")
+
+    def _assert(self):
+        self._assert_with(_BadIdError)
+
+class TestBadPrev(TestError):
+    def _data(self):
+        return ("JE02", 2, _Schema.prev, 3)
+
+    def _assert(self):
+        self._assert_with(_BadPrevError)
+
+class TestBadLast(TestError):
+    def _data(self):
+        return ("JE04", 2, _Schema.last, 1)
+
+    def _assert(self):
+        self._assert_with(_BadLastError)
+
+class TestSizeMismatch(TestError):
+    def _data(self):
+        return ("JE00", 2, None, None)
+
+    def _modify_doc(self, doc):
+        doc.append(("silly-me", "problem!"))
+        return doc
+
+    def _assert(self):
+        self._assert_with(_SchemaSizeMismatchError)
+
+class TestNoSuchId(TestError):
+    def _data(self):
+        return ("JE04", 2, None, None)
+
+    def _modify_doc(self, doc):
+        data=[(_Schema.id, "JE04-4"),
+                (_Schema.rev, 4),
+                (_Schema.prev, 3),
+                (_Schema.last, 4)
             ]
+        for (x, y) in data:
+            doc=[(a, y) if a==x.name else (a, b) for (a, b) in doc]
+        return doc
 
     def _assert(self):
-        self._assert_with(_NonConsecutiveRevisionsError, repo._non_consec)
-
-class TestPrevMissing(TestError):
-    # tests missing links in previous chain
-    def _data(self):
-        return [
-                ("JE00", 1, "last", 5),
-                ("JE00", 2, "last", 5),
-                ("JE00", 3, "last", 5)
-            ]
-
-    def _assert(self):
-        self._assert_with(_MissingLinksError, repo._prev_missing)
-
-class TestEndMissing(TestError):
-    # tests missing links @ end
-    def _data(self):
-        return [("JE03", 1, "last", 8)]
-
-    def _assert(self):
-        self._assert_with(_MissingLinksError, repo._end_missing)
-
+        self._assert_with(_NoSuchDocId)
 
 # `TestError` deleted; else, unittest will run it.
 # `TestError` is a base class, & doesn't test anything, so no need to run it.
