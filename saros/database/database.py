@@ -116,9 +116,9 @@ class _SarosDB:
         # by default (i.e., `link`=True), updates `last` of upstream revs.
         doc=OrderedDict(_File(fname)._parse(_file_load_schema()))
         name, rev=(doc[_Schema.name.name], doc[_Schema.rev.name])
-        doc_id=cls.__doc_id(name, rev)
-        doc.pop(_Schema.id.name)            # pop the doc id
-        cls.__put(doc_id, doc.items())
+        doc.pop(_Schema.id.name)            # discard the doc id got from file
+        doc_id=cls.__doc_id(name, rev)      # generate the doc id afresh
+        cls.__put(doc_id, doc.items())      # load doc into db
         if link:
             cls.__update_links(doc_id)
 
