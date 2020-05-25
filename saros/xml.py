@@ -106,17 +106,17 @@ class _File:
         # xml file extension
         return ".xml"
 
-    def _link(self, prev_rev, db):
-        # link doc represented by this file to previous revision `prev_rev`
-        self.__update(prev_rev)
+    def _link(self, prev, db):
+        # link doc represented by this file to previous revision `prev`
+        self.__update(_Schema.prev, prev)
         db._load(self.__name)
 
-    def __update(self, prev_rev):
-        # updates `prev` value in xml file
+    def __update(self, field, value):
+        # update value of `field` in xml file
         doc=[]
         for (name, val) in self._read():
-            if name == _Schema.prev.name:
-                val=prev_rev
+            if name == field.name:
+                val=value
             doc.append((name, val))
         self._write(doc)
 

@@ -105,6 +105,6 @@ def __file_schema():
             norm.append(i)
     return pref+norm
 
-_FileParseSchema=__file_schema()
+_FileLoadSchema=__file_schema()
 
 

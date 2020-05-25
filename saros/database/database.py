@@ -1,7 +1,7 @@
 from collections import OrderedDict
 
 from ..xml import _File
-from .schema import (_Schema, _FileParseSchema,)
+from .schema import (_Schema, _FileLoadSchema,)
 from ..error import (_NoSuchDocIdError, _NoSuchColumnError,)
 
 # this module contains the saros db class.
@@ -114,7 +114,7 @@ class _SarosDB:
     def _load(cls, fname, link=True):
         # loads xml doc info contained in file named `fname` into the database.
         # by default (i.e., `link`=True), updates `last` of upstream revs.
-        doc=OrderedDict(_File(fname)._parse(_FileParseSchema))
+        doc=OrderedDict(_File(fname)._parse(_FileLoadSchema))
         name, rev=(doc[_Schema.name.name], doc[_Schema.rev.name])
         doc_id=cls.__doc_id(name, rev)
         doc.pop(_Schema.id.name)            # pop the doc id
