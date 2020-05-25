@@ -47,40 +47,34 @@ class _Schema(Enum):
         doc=OrderedDict(_doc)   # dict allows easy lookup.
         cols=doc.keys()         # columns in the `doc`
         if self in _Schema:
-            if len([x for (x, y) in _doc if x==self.name]) > 1: # duplicates?
+            if len([x for (x, y) in _doc if x==self.name]) > 1:     # dups?
                 raise _DuplicateColumnError(_Schema, fname, self, _doc)
-            if len(cols) < self._index+1:           # missing index?
+            if len(cols) < self._index+1:                           # no index?
                 raise _ColumnMismatchError(_Schema, fname, self, _doc)
-            if self.name!=cols[self._index]:        # bad field order?
+            if self.name!=cols[self._index]:                        # bad order?
                 raise _ColumnMismatchError(_Schema, fname, self, _doc)
-            if type(doc[self.name])!=self._type:    # bad data type?
+            if type(doc[self.name])!=self._type:                    # bad type?
                 raise _BadDataTypeError(_Schema, fname, self, _doc)
         if self==_Schema.name:
-            # `name` should not be empty or whitespace.
             if not doc[self.name] or doc[self.name].isspace():
                 raise _BadNameError(_Schema, fname, self, _doc)
         if self==_Schema.rev:
-            # bad revision number?
             if doc[self.name] < 1:
                 raise _BadRevisionError(_Schema, fname, self, _doc)
         if self==_Schema.id:
-            # bad id?
             _name, _rev=(doc[_Schema.name.name], doc[_Schema.rev.name])
             if not doc[self.name].startswith(_name) or \
                     not doc[self.name].endswith(str(_rev)) or \
                     len(doc[self.name]) < len(_name) + len(str(_rev)):
                 raise _BadIdError(_Schema, fname, self, _doc)
         if self==_Schema.prev:
-            # bad previous revision number?
             if not (doc[self.name] == 0 or \
                     doc[self.name] == doc[_Schema.rev.name] - 1):
                 raise _BadPrevError(_Schema, fname, self, _doc)
         if self==_Schema.last:
-            # bad `last`?
             if doc[self.name] < doc[_Schema.rev.name]:
                 raise _BadLastError(_Schema, fname, self, _doc)
         if self==_Schema.content:
-            # bad doc size?
             if self.name!=cols[-1]:
                 raise _SchemaSizeMismatchError(_Schema, fname, self, _doc)
 
