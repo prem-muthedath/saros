@@ -1,3 +1,5 @@
+#!/usr/bin/python
+
 from collections import OrderedDict
 
 from ..xml import _File
@@ -17,7 +19,7 @@ class _SarosDB:
     # 2. update XML with valid revision link info, & send it to SarosDB to load
     # 3. SarosDB then parses XML, & loads data
     # 4. After load, by default, SarosDB updates "last" of all revisions of the 
-    #    doc whose "last" < "last" of the just updated link.
+    #    doc whose revision < revision of the just updated link.
     #
     # SCHEMA:
     # 1. each row represents a doc with a unique combination of "name" & "rev"
@@ -43,10 +45,11 @@ class _SarosDB:
     #    consecutive; `id`, `name`, `last`, `prev`, & `content` values proper.
     # 4. saros has no api to add a document. the only way to update data in 
     #    saros is through a file upload. so based on (3), the `schema` module 
-    #    offers a basic schema validation for file data.  and saros app fixes 
-    #    any broken links.  so with those 2 things, saros db should be fine.
+    #    offers basic schema validation for file data.  and saros app fixes any 
+    #    broken links.  with those 2 things, saros db should be just fine.
 
     # __docs = { doc_id: [ ("name", val), ("rev", val), ("prev", val), ("last", val), ("content", val) ] }
+    # NOTE: the database contains broken revision links.
     __docs = { # represents the database
         "JE00-1": [("name", "JE00"), ("rev", 1), ("prev", 0), ("last", 3), ("content", "i am JE00-1")],
         "JE00-2": [("name", "JE00"), ("rev", 2), ("prev", 1), ("last", 3), ("content", "i am JE00-2")],

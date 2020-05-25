@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
 import os
+
 from .database.schema import _Schema
 
 # this module contains private classes that do back-and-forth conversion between 

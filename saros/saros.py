@@ -61,25 +61,24 @@ from .document import _Document
 # 13. To fix the problem in (12), we must (for a doc with a specific "name"):
 #       (a) spot the "rev" with broken link -> rev 4
 #       (b) determine its right "prev" value -> "prev"=3
-#       (c) determine its right "last" value -> "last"=7
-#       (d) update Saros with (a), (b), & (c)
-#       (e) after 13(d), Saros sets "last" of all "rev"s whose "last" < 7 to 7.
-# 14. To do 13 (a), (b), & (c) [ see example in (12) ]:
+#       (c) update Saros with (b)
+#       (d) after 13(c), Saros sets "last" of all "rev"s whose "rev" < 4 to 7.
+# 14. To do 13 (a) & (b) [ see example in (12) ]:
 #       -> call Saros db query "last_revs()" with a doc "name" -- say, "goo"
 #       -> you get [(rev, last)] -- [(1,3),(3,3),(2,3),(5,7),(4,7),(7,7),(6,7)]
-#       -> use this unordered data to do 13 (a), (b), & (c)
-# 15.  But Saros database has a quirk -- To do 13 (d):
-#       --> Saros db has no query to update "prev" & "last"
+#       -> use this unordered data to do 13 (a) & (b)
+# 15.  But Saros database has a quirk -- To do 13 (c):
+#       --> Saros db has no query to update "prev"
 #       --> instead, you must ask Saros db for a full XML dump of broken "rev"
-#       --> you then update the XML with data from 13 (a), (b), & (c)
+#       --> you then update the XML with data from 13 (b)
 #       --> send modified XML to Saros db to load
 #       --> Saros db then parses XML & loads data
 ################################################################################
 
 class Saros:
     # this class represents the saros application.
-    # 
-    # the only public class in this package, it interfaces with Saros database 
+
+    # the only public class in this application, it works with Saros database 
     # (the document repository) & other private classes to link unlinked 
     # document revisions (i.e., fix broken revision links) in Saros database.
 
@@ -96,7 +95,7 @@ class Saros:
         return val.strip("\n")
 
     def __doc_names(self):
-        # list of all unique doc names
+        # list of all unique doc names, sorted by name
         return _SarosDB()._doc_names()
 
 
