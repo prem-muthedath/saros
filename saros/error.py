@@ -97,7 +97,7 @@ class _SchemaSizeMismatchError(_FileParseError):
         return "the last column '" + self._col.name + \
                 "' in db schema is not the last one in file."
 
-class _NoSuchDocId(Exception):
+class _NoSuchDocIdError(Exception):
     def __init__(self, doc_id):
         self.__id=doc_id
 
@@ -105,4 +105,14 @@ class _NoSuchDocId(Exception):
         return "doc id generated from `name` & `rev` values " + \
                 "does not exist in the db." + \
                 "\n => doc id: " + self.__id
+
+class _NoSuchColumnError(Exception):
+    def __init__(self, doc_id, col):
+        self.__id=doc_id
+        self.__col=col
+
+    def __str__(self):
+        return "No such column '" + self.__col + "' exists in db " + \
+                "for doc id: '" + self.__id + "'."
+
 

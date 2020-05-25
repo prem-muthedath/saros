@@ -16,7 +16,7 @@ from ..error import (_DuplicateColumnError,
                         _BadPrevError,
                         _BadLastError,
                         _SchemaSizeMismatchError,
-                        _NoSuchDocId,
+                        _NoSuchDocIdError,
                     )
 
 # test module -- contains all unit tests for saros application.
@@ -231,7 +231,7 @@ class TestNoSuchId(TestError):
         return doc
 
     def _assert(self):
-        self._assert_with(_NoSuchDocId)
+        self._assert_with(_NoSuchDocIdError)
 
 # `TestError` deleted; else, unittest will run it.
 # `TestError` is a base class, & doesn't test anything, so no need to run it.

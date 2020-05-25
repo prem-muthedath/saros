@@ -59,32 +59,32 @@ class _Schema(Enum):
             # check invalid field data type.
             if type(doc[self.name])!=self._type:
                 raise _BadDataTypeError(_Schema, fname, self, _doc)
-        # `name` should not be empty or whitespace.
         if self==_Schema.name:
+        # `name` should not be empty or whitespace.
             if not doc[self.name] or doc[self.name].isspace():
                 raise _BadNameError(_Schema, fname, self, _doc)
-        # check invalid revision number.
         if self==_Schema.rev:
+        # check invalid revision number.
             if doc[self.name] < 1:
                 raise _BadRevisionError(_Schema, fname, self, _doc)
-        # check invalid id.
         if self==_Schema.id:
+        # check invalid id.
             _name, _rev=(doc[_Schema.name.name], doc[_Schema.rev.name])
             if not doc[self.name].startswith(_name) or \
                     not doc[self.name].endswith(str(_rev)) or \
                     len(doc[self.name]) < len(_name) + len(str(_rev)):
                 raise _BadIdError(_Schema, fname, self, _doc)
-        # check invalid previous revision number.
         if self==_Schema.prev:
+        # check invalid previous revision number.
             if not (doc[self.name] == 0 or \
                     doc[self.name] == doc[_Schema.rev.name] - 1):
                 raise _BadPrevError(_Schema, fname, self, _doc)
-        # check invalid `last`.
         if self==_Schema.last:
+        # check invalid `last`.
             if doc[self.name] < doc[_Schema.rev.name]:
                 raise _BadLastError(_Schema, fname, self, _doc)
-        # check invalid doc size.
         if self==_Schema.content:
+        # check invalid doc size.
             if self.name!=cols[-1]:
                 raise _SchemaSizeMismatchError(_Schema, fname, self, _doc)
 

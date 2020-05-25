@@ -2,7 +2,7 @@ from collections import OrderedDict
 
 from ..xml import _File
 from .schema import (_Schema, _FileParseSchema,)
-from ..error import _NoSuchDocId
+from ..error import (_NoSuchDocIdError, _NoSuchColumnError,)
 
 # this module contains the saros db class.
 # ##############################################################################
@@ -38,13 +38,13 @@ class _SarosDB:
     #    from any _SarosDB instance are available to all _SarosDB instances.
     # 2. to make (1) work, all methods are class methods, but you can still use 
     #    _SarosDB().method().  ref: https://pythonbasics.org/classmethod/
-    # 3. the db maintains good data, with the exception that revisions may be 
+    # 3. saros db maintains good data, with the exception that revisions may be 
     #    unlinked.  good data means that data have right types; revisions 
-    #    consecutive; `id`, `name`, `last`, `prev`, & `content` values are good.
+    #    consecutive; `id`, `name`, `last`, `prev`, & `content` values proper.
     # 4. saros has no api to add a document. the only way to update data in 
     #    saros is through a file upload. so based on (3), the `schema` module 
     #    offers a basic schema validation for file data.  and saros app fixes 
-    #    broken links.  so with those 2 things, saros db should be good.
+    #    any broken links.  so with those 2 things, saros db should be fine.
 
     # __docs = { doc_id: [ ("name", val), ("rev", val), ("prev", val), ("last", val), ("content", val) ] }
     __docs = { # represents the database
@@ -106,7 +106,7 @@ class _SarosDB:
     def _doc_dump(cls, name, rev, fname):
         # dumps doc named `name`, revision `rev` as xml into file named `fname`
         doc_id=cls.__doc_id(name, rev)
-        data=cls.__doc_data(doc_id)    # fixed to avoid potential nasty bugs
+        data=cls.__doc_data(doc_id)    # fixed to avoid nasty bugs
         doc=[(_Schema.id.name, doc_id)] + data
         _File(fname)._write(doc)
 
@@ -117,21 +117,18 @@ class _SarosDB:
         doc=OrderedDict(_File(fname)._parse(_FileParseSchema))
         name, rev=(doc[_Schema.name.name], doc[_Schema.rev.name])
         doc_id=cls.__doc_id(name, rev)
-        if not cls.__docs.has_key(doc_id):  # check if id is in db
-            raise _NoSuchDocId(doc_id)
-        cls.__docs.pop(doc_id)              # delete the doc in db
         doc.pop(_Schema.id.name)            # pop the doc id
-        cls.__docs[doc_id]=doc.items()      # insert doc in db
+        cls.__put(doc_id, doc.items())
         if link:
-            cls.__update_last(doc_id)
+            cls.__update_links(doc_id)
 
     @classmethod
     def __doc_data(cls, doc_id):
-        # returns doc data, as a new list, for a given `doc_id`
+        # returns doc data, as a new list, for `doc_id`.
         # new list reqd; otherwise, any local changes, made either by clients or 
         # by saros, will be reflected everywhere, creating nasty bugs.
         if not cls.__docs.has_key(doc_id):
-            raise _NoSuchDocId(doc_id)
+            raise _NoSuchDocIdError(doc_id)
         return [item for item in cls.__docs[doc_id]]
 
     @classmethod
@@ -140,40 +137,45 @@ class _SarosDB:
         return name + "-" + str(rev)
 
     @classmethod
-    def __update_last(cls, doc_id):
+    def __update_links(cls, doc_id):
         # doc_id -> id of doc whose revision link has just been updated.
         # name -> name associated with `doc_id`
         # rev -> revision associated with `doc_id`
         # last -> last associated with `doc_id`
         #
-        # for all revs of doc named `name`, update `last` if `_rev` < `rev`
+        # for all revs `_rev` of doc named `name`, update links -- i.e., `last` 
+        # values -- if `_rev` < `rev`.
         last=cls.__fetch(doc_id, _Schema.last)
         name=cls.__fetch(doc_id, _Schema.name)
         rev=cls.__fetch(doc_id, _Schema.rev)
         for (_rev, _) in cls._last_revs(name):
             if _rev < rev:    # fix for a nasty bug
                 _id=cls.__doc_id(name, _rev)
-                cls.__put(_id, _Schema.last, last)
+                data=[(_Schema.last.name, last)]
+                cls.__put(_id, data)
 
     @classmethod
     def __fetch(cls, doc_id, col):
-        # given a doc_id & col (i.e., attribute name), returns the value
-        doc=cls.__docs[doc_id]
-        for (_col, _val) in doc:
-            if _col == col.name: return _val
-        raise RuntimeError("fetch failure for doc_id: " + \
-                            doc_id + " col: " + col.name + " not found")
+        # given a doc_id & col (i.e., attribute), returns the value
+        doc=cls.__doc_data_dict(doc_id)
+        if doc.has_key(col.name):
+            return doc[col.name]
+        raise _NoSuchColumnError(doc_id, col.name)
 
     @classmethod
-    def __put(cls, doc_id, col, val):
-        # updates col (i.e., attribute name) value of doc referred by `doc_id`
-        doc=cls.__docs[doc_id]
-        for index, (_col, _val) in enumerate(doc):
-            if _col == col.name:
-                doc[index]=(col.name, val)
-                return
-        raise RuntimeError("put failure for doc_id: " + doc_id + \
-                " col: " + col.name + " not found")
+    def __put(cls, doc_id, data):
+        # updates data -- [(col_name, val)] -- of doc referred by `doc_id`
+        doc=cls.__doc_data_dict(doc_id)
+        for (col_name, val) in data:
+            if not doc.has_key(col_name):
+                raise _NoSuchColumnError(doc_id, col_name)
+            doc[col_name]=val
+        cls.__docs[doc_id]=doc.items()
+
+    @classmethod
+    def __doc_data_dict(cls, doc_id):
+        # returns an ord dict of doc data, allowing easy lookup.
+        return OrderedDict(cls.__doc_data(doc_id))
 
 
 
