@@ -47,13 +47,13 @@ class _Schema(Enum):
         doc=OrderedDict(_doc)   # dict allows easy lookup.
         cols=doc.keys()         # columns in the `doc`
         if self in _Schema:
-            if len([x for (x, y) in _doc if x==self.name]) > 1:     # dups?
+            if len([x for (x, y) in _doc if x==self.name]) > 1:
                 raise _DuplicateColumnError(_Schema, fname, self, _doc)
-            if len(cols) < self._index+1:                           # no index?
+            if len(cols) < self._index+1:
                 raise _ColumnMismatchError(_Schema, fname, self, _doc)
-            if self.name!=cols[self._index]:                        # bad order?
+            if self.name!=cols[self._index]:
                 raise _ColumnMismatchError(_Schema, fname, self, _doc)
-            if type(doc[self.name])!=self._type:                    # bad type?
+            if type(doc[self.name])!=self._type:
                 raise _BadDataTypeError(_Schema, fname, self, _doc)
         if self==_Schema.name:
             if not doc[self.name] or doc[self.name].isspace():
