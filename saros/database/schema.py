@@ -27,12 +27,12 @@ class _Schema(Enum):
     _order_ = 'id name rev prev last content'
     _settings_ = NoAlias
 
-    id=(str, 0)
-    name=(str, 1)
-    rev=(int, 2)
-    prev=(int, 3)
-    last=(int, 4)
-    content=(str, 5)
+    id=(str, 0)         # id column
+    name=(str, 1)       # name column
+    rev=(int, 2)        # revision column
+    prev=(int, 3)       # previous revision column
+    last=(int, 4)       # last revision column
+    content=(str, 5)    # content column
 
     def __init__(self, _type, index):
         # `_type`: data type defined for the column in schema.
@@ -83,7 +83,7 @@ class _Schema(Enum):
         return str((self.name, self._type, self._index))
 
 
-def __file_schema():
+def _file_load_schema():
     # schema for file validation.
     # we want to validate `name` & `rev` before `id`.
     norm=[]     # items in normal order, as defined in `_Schema`.
@@ -95,6 +95,5 @@ def __file_schema():
             norm.append(i)
     return pref+norm
 
-_FileLoadSchema=__file_schema()
 
 
