@@ -52,9 +52,9 @@ class _Schema(Enum):
                 raise _MissingColumnError(_Schema, fname, self, _doc)
             if len(pos) > 1:
                 raise _DuplicateColumnError(_Schema, fname, self, _doc)
-            if self._index!=pos[0]:
+            if pos[0] != self._index:
                 raise _ColumnIndexMismatchError(_Schema, fname, self, _doc)
-            if type(doc[self.name])!=self._type:
+            if type(doc[self.name]) != self._type:
                 raise _BadDataTypeError(_Schema, fname, self, _doc)
         if self==_Schema.name:
             if not doc[self.name] or doc[self.name].isspace():
@@ -76,7 +76,7 @@ class _Schema(Enum):
             if doc[self.name] < doc[_Schema.rev.name]:
                 raise _BadLastError(_Schema, fname, self, _doc)
         if self==_Schema.content:
-            if pos[0]!=len(_doc)-1:
+            if len(_doc)-1 != pos[0]:
                 raise _SchemaSizeMismatchError(_Schema, fname, self, _doc)
 
     def __str__(self):
