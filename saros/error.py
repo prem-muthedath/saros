@@ -54,16 +54,21 @@ class _FileParseError(Exception):
                 ",\n  ".join([i.__str__() for i in self._schema])
 
 
+class _MissingColumnError(_FileParseError):
+    def _header(self):
+        return "db column '" + self._col.name + \
+                "' missing in file."
+
 class _DuplicateColumnError(_FileParseError):
     def _header(self):
         return "db column '" + self._col.name + "' duplicated in file. " + \
                 "file validation aborted. " + \
                 "please remove duplicates & re-validate the file."
 
-class _ColumnMismatchError(_FileParseError):
+class _ColumnIndexMismatchError(_FileParseError):
     def _header(self):
         return "db column '" + self._col.name + \
-                "' missing or in wrong position in file."
+                "' in wrong position in file."
 
 class _BadDataTypeError(_FileParseError):
     def _header(self):

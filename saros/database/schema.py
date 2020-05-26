@@ -3,8 +3,9 @@
 from aenum import Enum, NoAlias
 from collections import OrderedDict
 
-from ..error import (_DuplicateColumnError,
-                        _ColumnMismatchError,
+from ..error import (_MissingColumnError,
+                        _DuplicateColumnError,
+                        _ColumnIndexMismatchError,
                         _BadDataTypeError,
                         _BadNameError,
                         _BadRevisionError,
@@ -45,14 +46,14 @@ class _Schema(Enum):
         # `_doc`: content of file `fname` as a list of (name, value) pairs.
         # `fname`: full name of file.
         doc=OrderedDict(_doc)   # dict allows easy lookup.
-        cols=doc.keys()         # columns in the `doc`
+        pos=[i for i, (x, y) in enumerate(_doc) if x==self.name]
         if self in _Schema:
-            if len([x for (x, y) in _doc if x==self.name]) > 1:
+            if len(pos) == 0:
+                raise _MissingColumnError(_Schema, fname, self, _doc)
+            if len(pos) > 1:
                 raise _DuplicateColumnError(_Schema, fname, self, _doc)
-            if len(cols) < self._index+1:
-                raise _ColumnMismatchError(_Schema, fname, self, _doc)
-            if self.name!=cols[self._index]:
-                raise _ColumnMismatchError(_Schema, fname, self, _doc)
+            if self._index!=pos[0]:
+                raise _ColumnIndexMismatchError(_Schema, fname, self, _doc)
             if type(doc[self.name])!=self._type:
                 raise _BadDataTypeError(_Schema, fname, self, _doc)
         if self==_Schema.name:
@@ -75,7 +76,7 @@ class _Schema(Enum):
             if doc[self.name] < doc[_Schema.rev.name]:
                 raise _BadLastError(_Schema, fname, self, _doc)
         if self==_Schema.content:
-            if self.name!=cols[-1]:
+            if pos[0]!=len(_doc)-1:
                 raise _SchemaSizeMismatchError(_Schema, fname, self, _doc)
 
     def __str__(self):

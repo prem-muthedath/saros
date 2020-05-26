@@ -7,8 +7,9 @@ from ..database.database import _SarosDB
 from ..database.schema import _Schema
 from ..xml import _File
 from . import repo
-from ..error import (_DuplicateColumnError,
-                        _ColumnMismatchError,
+from ..error import (_MissingColumnError,
+                        _DuplicateColumnError,
+                        _ColumnIndexMismatchError,
                         _BadDataTypeError,
                         _BadNameError,
                         _BadRevisionError,
@@ -122,6 +123,26 @@ class TestError(Test):
         return [(x, val) if x==field.name else (x, y) for (x, y) in doc]
 
 
+class TestEmptyFile(TestError):
+    def _data(self):
+        return ("JE00", 4, None, None)
+
+    def _modify_doc(self, doc):
+        return []
+
+    def _assert(self):
+        self._assert_with(_MissingColumnError)
+
+class TestMissingColumn(TestError):
+    def _data(self):
+        return ("JE00", 4, None, None)
+
+    def _modify_doc(self, doc):
+        return [(x, y) for i, (x, y) in enumerate(doc) if i != 3]
+
+    def _assert(self):
+        self._assert_with(_MissingColumnError)
+
 class TestDuplicate(TestError):
     def _data(self):
         return ("JE00", 2, None, None)
@@ -133,25 +154,16 @@ class TestDuplicate(TestError):
     def _assert(self):
         self._assert_with(_DuplicateColumnError)
 
-class TestEmptyFile(TestError):
+class TestConsecDuplicate(TestError):
     def _data(self):
-        return ("JE00", 4, None, None)
+        return ("JE00", 2, None, None)
 
     def _modify_doc(self, doc):
-        return []
+        doc=[(_Schema.id.name, "JE00-2")] + doc
+        return doc
 
     def _assert(self):
-        self._assert_with(_ColumnMismatchError)
-
-class TestMissingColumn(TestError):
-    def _data(self):
-        return ("JE00", 4, None, None)
-
-    def _modify_doc(self, doc):
-        return [(x, y) for i, (x, y) in enumerate(doc) if i != 3]
-
-    def _assert(self):
-        self._assert_with(_ColumnMismatchError)
+        self._assert_with(_ColumnIndexMismatchError)
 
 class TestBadFieldOrder(TestError):
     def _data(self):
@@ -161,7 +173,7 @@ class TestBadFieldOrder(TestError):
         return doc[::-1]    # reversed doc contents
 
     def _assert(self):
-        self._assert_with(_ColumnMismatchError)
+        self._assert_with(_ColumnIndexMismatchError)
 
 class TestBadType(TestError):
     def _data(self):
