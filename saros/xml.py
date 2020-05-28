@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
 import os
+from collections import OrderedDict
 
 from .database.schema import _Schema
 
@@ -65,7 +66,7 @@ class _Element:
 
 
 class _File:
-    # represents an xml file that has complete info about a document
+    # represents an xml file that has complete info about a document.
     def __init__(self, name):
         # `name` is name of xml file
         # NOTE: `name` does NOT include file path and file extension
@@ -121,11 +122,14 @@ class _File:
             doc.append((name, val))
         self._write(doc)
 
-    def _parse(self, schema):
-        # parse file as per schema
-        doc=self._read()
+    def _parse(self, schema, db):
+        # parse file as per schema & db specifications.
+        # returns an ordered dict with `_Schema` members as keys.
+        fdoc=self._read()
+        doc=OrderedDict()
         for col in schema:
-            col._validate(doc, self.__full_name())
+            doc[col]=col._associated_value(fdoc[:], self.__full_name())
+        db._validate(doc, self.__full_name())
         return doc
 
     def __str__(self):

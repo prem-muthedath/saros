@@ -3,8 +3,8 @@
 from collections import OrderedDict
 
 from ..xml import _File
-from .schema import (_Schema, _file_load_schema,)
-from ..error import (_NoSuchDocIdError, _NoSuchColumnError,)
+from .schema import _Schema
+from ..error import (_FileDataError, _NoSuchDocIdError, _NoSuchColumnError,)
 
 # this module contains the saros db class.
 # ##############################################################################
@@ -107,7 +107,8 @@ class _SarosDB:
 
     @classmethod
     def _doc_dump(cls, name, rev, fname):
-        # dumps doc named `name`, revision `rev` as xml into file named `fname`
+        # dumps doc named `name`, revision `rev` into file named `fname`
+        # NOTE: `fname` does NOT include path & extn.
         doc_id=cls.__doc_id(name, rev)
         data=cls.__doc_data(doc_id)    # fixed to avoid nasty bugs
         doc=[(_Schema.id.name, doc_id)] + data
@@ -115,15 +116,39 @@ class _SarosDB:
 
     @classmethod
     def _load(cls, fname, link=True):
-        # loads xml doc info contained in file named `fname` into the database.
+        # loads doc data contained in file named `fname` into the database.
         # by default (i.e., `link`=True), updates `last` of upstream revs.
-        doc=OrderedDict(_File(fname)._parse(_file_load_schema()))
-        name, rev=(doc[_Schema.name.name], doc[_Schema.rev.name])
-        doc.pop(_Schema.id.name)            # discard the doc id got from file
-        doc_id=cls.__doc_id(name, rev)      # generate the doc id afresh
+        # NOTE: `fname` does NOT include path & extn.
+        #
+        # `doc`: doc data as an ordered dict with `_Schema` members as keys.
+        doc=_File(fname)._parse(_Schema, _SarosDB)
+        doc_id=doc.pop(_Schema.id)
         cls.__put(doc_id, doc.items())      # load doc into db
         if link:
             cls.__update_links(doc_id)
+
+    @classmethod
+    def _validate(cls, doc, ffname):
+        # validates values of `doc`, an ordered dict with `_Schema` members as 
+        # keys; throws exception if values are bad.
+        # `doc` represents a saros doc identified by name & revision.
+        # `ffname`: full name (path & extn) of file -- orig source of `doc`.
+        doc_id= cls.__doc_id(doc[_Schema.name], doc[_Schema.rev])
+        if not doc[_Schema.name] or doc[_Schema.name].isspace():
+            header="doc 'name' is empty or whitespace in " + ffname
+            raise _FileDataError(header, doc.items())
+        if doc[_Schema.rev] < 1:
+            header="doc revision < 1 in " + ffname
+            raise _FileDataError(header, doc.items())
+        if doc[_Schema.id] != doc_id:
+            header="doc id not equal to '" + doc_id + "' in " + ffname
+            raise _FileDataError(header, doc.items())
+        if doc[_Schema.prev] not in [0, doc[_Schema.rev] - 1]:
+            header="doc's 'prev' neither 0 nor 'rev' - 1 in " + ffname
+            raise _FileDataError(header, doc.items())
+        if doc[_Schema.last] < doc[_Schema.rev]:
+            header="doc's 'last' <  'rev' in " + ffname
+            raise _FileDataError(header, doc.items())
 
     @classmethod
     def __doc_data(cls, doc_id):
@@ -154,7 +179,7 @@ class _SarosDB:
         for (_rev, _) in cls._last_revs(name):
             if _rev < rev:    # fix for a nasty bug
                 _id=cls.__doc_id(name, _rev)
-                data=[(_Schema.last.name, last)]
+                data=[(_Schema.last, last)]
                 cls.__put(_id, data)
 
     @classmethod
@@ -167,12 +192,12 @@ class _SarosDB:
 
     @classmethod
     def __put(cls, doc_id, data):
-        # updates data -- [(col_name, val)] -- of doc referred by `doc_id`
+        # updates data -- [(col, val)] -- of doc referred by `doc_id`
         doc=cls.__doc_data_dict(doc_id)
-        for (col_name, val) in data:
-            if not doc.has_key(col_name):
-                raise _NoSuchColumnError(doc_id, col_name)
-            doc[col_name]=val
+        for (col, val) in data:
+            if not doc.has_key(col.name):
+                raise _NoSuchColumnError(doc_id, col.name)
+            doc[col.name]=val
         cls.__docs[doc_id]=doc.items()
 
     @classmethod

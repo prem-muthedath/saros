@@ -3,43 +3,32 @@
 # error module -- contains all exceptions classes in saros application.
 # ##############################################################################
 
-class _FileParseError(Exception):
-    # represents bad doc file -- file nonconformant with db schema -- error.
-    def __init__(self, schema, fname, col, doc):
-        # `schema`: valid, ordered db schema.
-        # `fname`: full name of doc file related to error.
+class _FileSchemaError(Exception):
+    # represents error when doc file schema is nonconformant with db schema.
+    def __init__(self, header, col, fdoc):
+        # `header`: error headline.
         # `col`: db column related to error.
-        # `doc`: parsed data from `fname`, as a [(name, val), ..., (name, val)]
-        self._schema=schema
-        self._fname=fname
-        self._col=col
-        self._doc=doc
+        # `fdoc`: parsed doc data from file = [(name, val), ..., (name, val)]
+        self.__header=header
+        self.__col=col
+        self.__fdoc=fdoc
 
     def __str__(self):
-        # err msg
-        return self._header() + \
-                self.__fdata() + \
+        # err msg.
+        return self.__header + \
                 self.__cdata() + \
                 self.__pdata() + \
                 self.__sdata()
-
-    def _header(self):
-        # error msg header.
-        pass
-
-    def __fdata(self):
-        # file name, formatted for err msg.
-        return "\n => problem file: \n  " + self._fname
 
     def __cdata(self):
         # db column details, as str.
         return "\n => error @ valid db column " + \
                 "(col name, data type, schema-position):\n  " + \
-                self._col.__str__()
+                self.__col.__str__()
 
     def __pdata(self):
         # parsed file data, with additional details, in string format.
-        data=[self.__grp(x, y, i) for i, (x, y) in enumerate(self._doc)]
+        data=[self.__grp(x, y, i) for i, (x, y) in enumerate(self.__fdoc)]
         return "\n => parsed file data as " + \
                 "(col name, val, type, position):\n  " + ",\n  ".join(data)
 
@@ -51,72 +40,47 @@ class _FileParseError(Exception):
     def __sdata(self):
         # db schema, in string format.
         return "\n => FYI - valid db schema (col name, type, position):\n  " + \
-                ",\n  ".join([i.__str__() for i in self._schema])
+                ",\n  ".join([i.__str__() for i in self.__col.__class__])
 
 
-class _MissingColumnError(_FileParseError):
-    def _header(self):
-        return "db column '" + self._col.name + \
-                "' missing in file."
+class _FileDataError(Exception):
+    # represents error when doc file data is nonconformant with saros db.
+    def __init__(self, header, fdoc):
+        # `header`: error headline.
+        # `fdoc`: parsed data from file = [(_Schema.member, value), ..., ]
+        self.__header=header
+        self.__fdoc=fdoc
 
-class _DuplicateColumnError(_FileParseError):
-    def _header(self):
-        return "db column '" + self._col.name + "' duplicated in file. " + \
-                "file validation aborted. " + \
-                "please remove duplicates & re-validate the file."
+    def __str__(self):
+        # err msg.
+        return self.__header + self.__pdata()
 
-class _ColumnIndexMismatchError(_FileParseError):
-    def _header(self):
-        return "db column '" + self._col.name + \
-                "' in wrong position in file."
+    def __pdata(self):
+        # parsed file data as str.
+        return "\n => file data:\n  " + \
+                ",\n  ". join([str((i.name, j)) for (i, j) in self.__fdoc])
 
-class _BadDataTypeError(_FileParseError):
-    def _header(self):
-        return "db column '" + self._col.name + \
-                "' data type mismatched in file."
-
-class _BadNameError(_FileParseError):
-    def _header(self):
-        return "doc name is whitespace or empty string in file."
-
-class _BadRevisionError(_FileParseError):
-    def _header(self):
-        return "doc revision < 1 in file."
-
-class _BadIdError(_FileParseError):
-    def _header(self):
-        return "doc id does not either start with `name` or end with " + \
-                "`rev` (as string) in file -- it must do both, in db format."
-
-class _BadPrevError(_FileParseError):
-    def _header(self):
-        return "doc's previous revision neither equals 0 nor " + \
-                "`rev` - 1 in file."
-
-class _BadLastError(_FileParseError):
-    def _header(self):
-        return "doc's `last` < `rev` in file."
-
-class _SchemaSizeMismatchError(_FileParseError):
-    def _header(self):
-        return "the last column '" + self._col.name + \
-                "' in db schema is not the last one in file."
 
 class _NoSuchDocIdError(Exception):
+    # represents error when doc id does not exist in saros db.
     def __init__(self, doc_id):
         self.__id=doc_id
 
     def __str__(self):
+        # err msg.
         return "doc id generated from `name` & `rev` values " + \
                 "does not exist in the db." + \
                 "\n => doc id: '" + self.__id + "'"
 
+
 class _NoSuchColumnError(Exception):
+    # represents error when column does not exist in saros db.
     def __init__(self, doc_id, col):
         self.__id=doc_id
         self.__col=col
 
     def __str__(self):
+        # err msg.
         return "No such column '" + self.__col + "' exists in db " + \
                 "for doc id: '" + self.__id + "'"
 

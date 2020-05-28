@@ -7,18 +7,7 @@ from ..database.database import _SarosDB
 from ..database.schema import _Schema
 from ..xml import _File
 from . import repo
-from ..error import (_MissingColumnError,
-                        _DuplicateColumnError,
-                        _ColumnIndexMismatchError,
-                        _BadDataTypeError,
-                        _BadNameError,
-                        _BadRevisionError,
-                        _BadIdError,
-                        _BadPrevError,
-                        _BadLastError,
-                        _SchemaSizeMismatchError,
-                        _NoSuchDocIdError,
-                    )
+from ..error import (_FileSchemaError, _FileDataError, _NoSuchDocIdError,)
 
 # test module -- contains all unit tests for saros application.
 # ##############################################################################
@@ -131,7 +120,7 @@ class TestEmptyFile(TestError):
         return []
 
     def _assert(self):
-        self._assert_with(_MissingColumnError)
+        self._assert_with(_FileSchemaError)
 
 class TestMissingColumn(TestError):
     def _data(self):
@@ -141,7 +130,7 @@ class TestMissingColumn(TestError):
         return [(x, y) for i, (x, y) in enumerate(doc) if i != 3]
 
     def _assert(self):
-        self._assert_with(_MissingColumnError)
+        self._assert_with(_FileSchemaError)
 
 class TestDuplicate(TestError):
     def _data(self):
@@ -152,7 +141,7 @@ class TestDuplicate(TestError):
         return doc
 
     def _assert(self):
-        self._assert_with(_DuplicateColumnError)
+        self._assert_with(_FileSchemaError)
 
 class TestConsecDuplicate(TestError):
     def _data(self):
@@ -163,7 +152,7 @@ class TestConsecDuplicate(TestError):
         return doc
 
     def _assert(self):
-        self._assert_with(_ColumnIndexMismatchError)
+        self._assert_with(_FileSchemaError)
 
 class TestBadFieldOrder(TestError):
     def _data(self):
@@ -173,49 +162,21 @@ class TestBadFieldOrder(TestError):
         return doc[::-1]    # reversed doc contents
 
     def _assert(self):
-        self._assert_with(_ColumnIndexMismatchError)
+        self._assert_with(_FileSchemaError)
 
 class TestBadType(TestError):
     def _data(self):
         return ("JE00", 4, _Schema.rev, "prem")
 
     def _assert(self):
-        self._assert_with(_BadDataTypeError)
+        self._assert_with(_FileSchemaError)
 
 class TestBadName(TestError):
     def _data(self):
         return ("JE00", 4, _Schema.name, " ")
 
     def _assert(self):
-        self._assert_with(_BadNameError)
-
-class TestBadRevision(TestError):
-    def _data(self):
-        return ("JE00", 4, _Schema.rev, 0)
-
-    def _assert(self):
-        self._assert_with(_BadRevisionError)
-
-class TestBadId(TestError):
-    def _data(self):
-        return ("JE02", 2, _Schema.id, "JE02")
-
-    def _assert(self):
-        self._assert_with(_BadIdError)
-
-class TestBadPrev(TestError):
-    def _data(self):
-        return ("JE02", 2, _Schema.prev, 3)
-
-    def _assert(self):
-        self._assert_with(_BadPrevError)
-
-class TestBadLast(TestError):
-    def _data(self):
-        return ("JE04", 2, _Schema.last, 1)
-
-    def _assert(self):
-        self._assert_with(_BadLastError)
+        self._assert_with(_FileDataError)
 
 class TestSizeMismatch(TestError):
     def _data(self):
@@ -226,7 +187,36 @@ class TestSizeMismatch(TestError):
         return doc
 
     def _assert(self):
-        self._assert_with(_SchemaSizeMismatchError)
+        self._assert_with(_FileSchemaError)
+
+class TestBadRevision(TestError):
+    def _data(self):
+        return ("JE00", 4, _Schema.rev, 0)
+
+    def _assert(self):
+        self._assert_with(_FileDataError)
+
+class TestBadId(TestError):
+    def _data(self):
+        return ("JE02", 2, _Schema.id, "JE02")
+
+    def _assert(self):
+        self._assert_with(_FileDataError)
+
+class TestBadPrev(TestError):
+    def _data(self):
+        return ("JE02", 2, _Schema.prev, 3)
+
+    def _assert(self):
+        self._assert_with(_FileDataError)
+
+class TestBadLast(TestError):
+    def _data(self):
+        return ("JE04", 2, _Schema.last, 1)
+
+    def _assert(self):
+        self._assert_with(_FileDataError)
+
 
 class TestNoSuchId(TestError):
     def _data(self):

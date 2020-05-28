@@ -1,19 +1,8 @@
 #!/usr/bin/python
 
 from aenum import Enum, NoAlias
-from collections import OrderedDict
 
-from ..error import (_MissingColumnError,
-                        _DuplicateColumnError,
-                        _ColumnIndexMismatchError,
-                        _BadDataTypeError,
-                        _BadNameError,
-                        _BadRevisionError,
-                        _BadIdError,
-                        _BadPrevError,
-                        _BadLastError,
-                        _SchemaSizeMismatchError,
-                    )
+from ..error import (_FileSchemaError, _FileDataError, _NoSuchDocIdError,)
 
 # this module defines the database schema.
 # ##############################################################################
@@ -41,60 +30,34 @@ class _Schema(Enum):
         self._type=_type
         self._index=index
 
-    def _validate(self, _doc, fname):
-        # checks if `doc` is invalid, per schema; if so, raises an exception.
-        # `_doc`: content of file `fname` as a list of (name, value) pairs.
-        # `fname`: full name of file.
-        doc=OrderedDict(_doc)   # dict allows easy lookup.
-        pos=[i for i, (x, y) in enumerate(_doc) if x==self.name]
-        if self in _Schema:
-            if len(pos) == 0:
-                raise _MissingColumnError(_Schema, fname, self, _doc)
-            if len(pos) > 1:
-                raise _DuplicateColumnError(_Schema, fname, self, _doc)
-            if pos[0] != self._index:
-                raise _ColumnIndexMismatchError(_Schema, fname, self, _doc)
-            if type(doc[self.name]) != self._type:
-                raise _BadDataTypeError(_Schema, fname, self, _doc)
-        if self==_Schema.name:
-            if not doc[self.name] or doc[self.name].isspace():
-                raise _BadNameError(_Schema, fname, self, _doc)
-        if self==_Schema.rev:
-            if doc[self.name] < 1:
-                raise _BadRevisionError(_Schema, fname, self, _doc)
-        if self==_Schema.id:
-            _name, _rev=(doc[_Schema.name.name], doc[_Schema.rev.name])
-            if not doc[self.name].startswith(_name) or \
-                    not doc[self.name].endswith(str(_rev)) or \
-                    len(doc[self.name]) < len(_name) + len(str(_rev)):
-                raise _BadIdError(_Schema, fname, self, _doc)
-        if self==_Schema.prev:
-            if not (doc[self.name] == 0 or \
-                    doc[self.name] == doc[_Schema.rev.name] - 1):
-                raise _BadPrevError(_Schema, fname, self, _doc)
-        if self==_Schema.last:
-            if doc[self.name] < doc[_Schema.rev.name]:
-                raise _BadLastError(_Schema, fname, self, _doc)
-        if self==_Schema.content:
-            if len(_doc)-1 != pos[0]:
-                raise _SchemaSizeMismatchError(_Schema, fname, self, _doc)
+    def _associated_value(self, fdoc, ffname):
+        # `fdoc`: doc data from file named `ffname` = [(name, value)].
+        # `ffname`: full name (path & extn) of file -- source of `fdoc`.
+        #
+        # returns unique value associated with `self.name` from `fdoc` if data 
+        # index & type match those of `self`; throws exception otherwise.
+        positions=[i for i, (x, _) in enumerate(fdoc) if x==self.name]
+        if len(positions) == 0:
+            hdr="db column '"+ self.name + "' missing in " + ffname
+            raise _FileSchemaError(hdr, self, fdoc)
+        if len(positions) > 1:
+            hdr="db column '"+ self.name + "' duplicated in " + ffname
+            raise _FileSchemaError(hdr, self, fdoc)
+        if positions[0] != self._index:
+            hdr="db column '"+ self.name + "' in wrong order in " + ffname
+            raise _FileSchemaError(hdr, self, fdoc)
+        if positions[0] == len(_Schema) - 1 and len(fdoc) != len(_Schema):
+            hdr="the last column is not '" + self.name + "' in " + ffname
+            raise _FileSchemaError(hdr, self, fdoc)
+        if type(fdoc[self._index][1]) != self._type:
+            hdr="db column '"+ self.name + "' data type wrong in " + ffname
+            raise _FileSchemaError(hdr, self, fdoc)
+        return fdoc[self._index][1]
 
     def __str__(self):
         # enum field as string.
         return str((self.name, self._type, self._index))
 
-
-def _file_load_schema():
-    # schema for file validation.
-    # we want to validate `name` & `rev` before `id`.
-    norm=[]     # items in normal order, as defined in `_Schema`.
-    pref=[]     # items in preferred order for validation.
-    for i in _Schema:
-        if i in [_Schema.name, _Schema.rev]:
-            pref.append(i)
-        else:
-            norm.append(i)
-    return pref+norm
 
 
 
