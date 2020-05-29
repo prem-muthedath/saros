@@ -4,7 +4,7 @@ from collections import OrderedDict
 
 from ..xml import _File
 from .schema import _Schema
-from ..error import (_FileDataError, _NoSuchDocIdError, _NoSuchColumnError,)
+from ..error import (_NoSuchDocIdError, _NoSuchColumnError,)
 
 # this module contains the saros db class.
 # ##############################################################################
@@ -109,7 +109,7 @@ class _SarosDB:
     def _doc_dump(cls, name, rev, fname):
         # dumps doc named `name`, revision `rev` into file named `fname`
         # NOTE: `fname` does NOT include path & extn.
-        doc_id=cls.__doc_id(name, rev)
+        doc_id=_Schema._doc_id(name, rev)
         data=cls.__doc_data(doc_id)    # fixed to avoid nasty bugs
         doc=[(_Schema.id.name, doc_id)] + data
         _File(fname)._write(doc)
@@ -121,34 +121,11 @@ class _SarosDB:
         # NOTE: `fname` does NOT include path & extn.
         #
         # `doc`: doc data as an ordered dict with `_Schema` members as keys.
-        doc=_File(fname)._parse(_Schema, _SarosDB)
+        doc=_Schema._map(_File(fname))
         doc_id=doc.pop(_Schema.id)
         cls.__put(doc_id, doc.items())      # load doc into db
         if link:
             cls.__update_links(doc_id)
-
-    @classmethod
-    def _validate(cls, doc, ffname):
-        # validates values of `doc`, an ordered dict with `_Schema` members as 
-        # keys; throws exception if values are bad.
-        # `doc` represents a saros doc identified by name & revision.
-        # `ffname`: full name (path & extn) of file -- orig source of `doc`.
-        doc_id= cls.__doc_id(doc[_Schema.name], doc[_Schema.rev])
-        if not doc[_Schema.name] or doc[_Schema.name].isspace():
-            header="doc 'name' is empty or whitespace in " + ffname
-            raise _FileDataError(header, doc.items())
-        if doc[_Schema.rev] < 1:
-            header="doc revision < 1 in " + ffname
-            raise _FileDataError(header, doc.items())
-        if doc[_Schema.id] != doc_id:
-            header="doc id not equal to '" + doc_id + "' in " + ffname
-            raise _FileDataError(header, doc.items())
-        if doc[_Schema.prev] not in [0, doc[_Schema.rev] - 1]:
-            header="doc's 'prev' neither 0 nor 'rev' - 1 in " + ffname
-            raise _FileDataError(header, doc.items())
-        if doc[_Schema.last] < doc[_Schema.rev]:
-            header="doc's 'last' <  'rev' in " + ffname
-            raise _FileDataError(header, doc.items())
 
     @classmethod
     def __doc_data(cls, doc_id):
@@ -158,11 +135,6 @@ class _SarosDB:
         if not cls.__docs.has_key(doc_id):
             raise _NoSuchDocIdError(doc_id)
         return [item for item in cls.__docs[doc_id]]
-
-    @classmethod
-    def __doc_id(cls, name, rev):
-        # returns id of doc named `name`, revision `rev`
-        return name + "-" + str(rev)
 
     @classmethod
     def __update_links(cls, doc_id):
@@ -178,7 +150,7 @@ class _SarosDB:
         rev=cls.__fetch(doc_id, _Schema.rev)
         for (_rev, _) in cls._last_revs(name):
             if _rev < rev:    # fix for a nasty bug
-                _id=cls.__doc_id(name, _rev)
+                _id=_Schema._doc_id(name, _rev)
                 data=[(_Schema.last, last)]
                 cls.__put(_id, data)
 

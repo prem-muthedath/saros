@@ -122,18 +122,15 @@ class _File:
             doc.append((name, val))
         self._write(doc)
 
-    def _parse(self, schema, db):
-        # parse file as per schema & db specifications.
-        # returns an ordered dict with `_Schema` members as keys.
+    def _schema_map(self):
+        # maps data to schema; returns ord dict with `_Schema` members as keys.
         fdoc=self._read()
         doc=OrderedDict()
-        for col in schema:
+        for col in _Schema:
             doc[col]=col._associated_value(fdoc[:], self.__full_name())
-        db._validate(doc, self.__full_name())
         return doc
 
     def __str__(self):
-        # full file name as a string.
         return self.__full_name()
 
 

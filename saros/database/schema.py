@@ -2,7 +2,7 @@
 
 from aenum import Enum, NoAlias
 
-from ..error import (_FileSchemaError, _FileDataError, _NoSuchDocIdError,)
+from ..error import (_FileSchemaError, _FileDataError,)
 
 # this module defines the database schema.
 # ##############################################################################
@@ -29,6 +29,35 @@ class _Schema(Enum):
         # `index`: column position in the schema.
         self._type=_type
         self._index=index
+
+    @classmethod
+    def _map(cls, _file):
+        # returns constraint-checked contents of `_file` as a schema map, an ord 
+        # dict with `_Schema` members as keys, that represents a saros doc with 
+        # name & revision; throws exception if data violate schema constraints.
+        doc=_file._schema_map()     # map file contents to schema
+        doc_id=cls._doc_id(doc[_Schema.name], doc[_Schema.rev])
+        if not doc[_Schema.name] or doc[_Schema.name].isspace():
+            header="doc 'name' is empty or whitespace in " + str(_file)
+            raise _FileDataError(header, doc.items())
+        if doc[_Schema.rev] < 1:
+            header="doc revision < 1 in " + str(_file)
+            raise _FileDataError(header, doc.items())
+        if doc[_Schema.id] != doc_id:
+            header="doc id not equal to '" + doc_id + "' in " + str(_file)
+            raise _FileDataError(header, doc.items())
+        if doc[_Schema.prev] not in [0, doc[_Schema.rev] - 1]:
+            header="doc's 'prev' neither 0 nor 'rev' - 1 in " + str(_file)
+            raise _FileDataError(header, doc.items())
+        if doc[_Schema.last] < doc[_Schema.rev]:
+            header="doc's 'last' <  'rev' in " + str(_file)
+            raise _FileDataError(header, doc.items())
+        return doc
+
+    @classmethod
+    def _doc_id(cls, name, rev):
+        # returns id of doc named `name`, revision `rev`
+        return name + "-" + str(rev)
 
     def _associated_value(self, fdoc, ffname):
         # `fdoc`: doc data from file named `ffname` = [(name, value)].
