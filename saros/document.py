@@ -14,7 +14,11 @@ class _Document:
 
     def _link_revs(self):
         # links all unlinked revs of `self.__name` to form a single rev chain.
-        # index starts @ 0, but we loop from 1, so index refers to previous.
+        # NOTE:
+        # 1. broken rev link is where a rev is without a valid prev.
+        # 2. saros revisions start from 1, so rev = 1 does not have a prev.
+        # 3. therefore, skip the first rev, as it can not have a broken link.
+        # 4. so we loop from [1:], but index starts @ 0, so index -> prev item.
         rev_chain=self.__saros_rev_chain()  # doc's `[(rev, last)]` from db
         for i, (rev, last) in enumerate(rev_chain[1:]):
             prev, plast=rev_chain[i]    # NOTE: `i`, not `i-1`
