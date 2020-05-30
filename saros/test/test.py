@@ -6,8 +6,8 @@ from ..saros import Saros
 from ..database.database import _SarosDB
 from ..database.schema import _Schema
 from ..xml import _File
-from . import repo
 from ..error import (_FileSchemaError, _FileDataError, _NoSuchDocIdError,)
+from . import repo
 
 # test module -- contains all unit tests for saros application.
 # ##############################################################################
@@ -67,6 +67,7 @@ class Test(unittest.TestCase):
         # load doc data in file to saros db, without linking
         _SarosDB()._load(self._fname, False)
 
+##############################################################################
 
 class TestFileLoad(Test):
     # base class for file load tests
@@ -111,6 +112,7 @@ class TestFileLoad(Test):
         _, _, field, val = self._data()
         return [(x, val) if x==field.name else (x, y) for (x, y) in doc]
 
+##############################################################################
 
 class TestEmptyFile(TestFileLoad):
     def _data(self):
@@ -154,35 +156,12 @@ class TestConsecDuplicate(TestFileLoad):
     def _assert(self):
         self._assert_with(_FileSchemaError)
 
-class TestReverseFieldOrder(TestFileLoad):
-    def _data(self):
-        return ("JE00", 4, None, None)
-
-    def _modify_doc(self, doc):
-        return doc[::-1]    # reversed doc contents
-
-    def _assert(self):
-        self._run()
-        print "input file:\n  " + ",\n  ".join(self.__fdata())
-        self.assertEqual(self._saros.to_str(), repo._orig())
-
-    def __fdata(self):
-        return [str((x, y)) for (x, y) in _File(self._fname)._read()]
-
-
 class TestBadType(TestFileLoad):
     def _data(self):
         return ("JE00", 4, _Schema.rev, "prem")
 
     def _assert(self):
         self._assert_with(_FileSchemaError)
-
-class TestBadName(TestFileLoad):
-    def _data(self):
-        return ("JE00", 4, _Schema.name, " ")
-
-    def _assert(self):
-        self._assert_with(_FileDataError)
 
 class TestSizeMismatch(TestFileLoad):
     def _data(self):
@@ -195,6 +174,15 @@ class TestSizeMismatch(TestFileLoad):
 
     def _assert(self):
         self._assert_with(_FileSchemaError)
+
+##############################################################################
+
+class TestBadName(TestFileLoad):
+    def _data(self):
+        return ("JE00", 4, _Schema.name, " ")
+
+    def _assert(self):
+        self._assert_with(_FileDataError)
 
 class TestBadRevision(TestFileLoad):
     def _data(self):
@@ -224,6 +212,27 @@ class TestBadLast(TestFileLoad):
     def _assert(self):
         self._assert_with(_FileDataError)
 
+##############################################################################
+
+class TestReverseFieldOrder(TestFileLoad):
+    def _data(self):
+        return ("JE00", 4, None, None)
+
+    def _modify_doc(self, doc):
+        return doc[::-1]    # reversed doc contents
+
+    def _assert(self):
+        self._run()
+        self.__print()
+        self.assertEqual(self._saros.to_str(), repo._orig())
+
+    def __print(self):
+        print "=> file data:\n  " + ",\n  ".join(self.__fdata())
+
+    def __fdata(self):
+        return [str((x, y)) for (x, y) in _File(self._fname)._read()]
+
+##############################################################################
 
 class TestNoSuchId(TestFileLoad):
     def _data(self):
@@ -241,6 +250,8 @@ class TestNoSuchId(TestFileLoad):
 
     def _assert(self):
         self._assert_with(_NoSuchDocIdError)
+
+##############################################################################
 
 # `TestFileLoad` deleted; else, unittest will run it.
 # `TestFileLoad` is a base class, & doesn't test anything, so no need to run it.
