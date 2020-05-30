@@ -13,7 +13,7 @@ class _Schema(Enum):
     # all saros doc dump files have to conform to the schema defined here.
     # class design idea from /u/ ethan furman @ https://tinyurl.com/ycacxytx
 
-    # schema definitions (see below) -- col names, order, & data types.
+    # schema definition (see below) -- members (i.e., columns) & their order.
     # "no-alias" settings from /u/ ethan furman @ https://tinyurl.com/yb2ofxvd
     _order_ = 'id name rev prev last content'
     _settings_ = NoAlias
@@ -26,7 +26,7 @@ class _Schema(Enum):
     content=str    # content column
 
     def __init__(self, _type):
-        # `_type`: data type defined for the column in schema.
+        # `_type`: data type defined for the member (i.e., column) in schema.
         self._type=_type
 
     @classmethod
