@@ -68,8 +68,8 @@ class Test(unittest.TestCase):
         _SarosDB()._load(self._fname, False)
 
 
-class TestError(Test):
-    # base class for error tests
+class TestFileLoad(Test):
+    # base class for file load tests
     def _assert(self):
         # assert expected error
         pass
@@ -112,7 +112,7 @@ class TestError(Test):
         return [(x, val) if x==field.name else (x, y) for (x, y) in doc]
 
 
-class TestEmptyFile(TestError):
+class TestEmptyFile(TestFileLoad):
     def _data(self):
         return ("JE00", 4, None, None)
 
@@ -122,7 +122,7 @@ class TestEmptyFile(TestError):
     def _assert(self):
         self._assert_with(_FileSchemaError)
 
-class TestMissingColumn(TestError):
+class TestMissingColumn(TestFileLoad):
     def _data(self):
         return ("JE00", 4, None, None)
 
@@ -132,7 +132,7 @@ class TestMissingColumn(TestError):
     def _assert(self):
         self._assert_with(_FileSchemaError)
 
-class TestDuplicate(TestError):
+class TestDuplicate(TestFileLoad):
     def _data(self):
         return ("JE00", 2, None, None)
 
@@ -143,18 +143,18 @@ class TestDuplicate(TestError):
     def _assert(self):
         self._assert_with(_FileSchemaError)
 
-class TestConsecDuplicate(TestError):
+class TestConsecDuplicate(TestFileLoad):
     def _data(self):
         return ("JE00", 2, None, None)
 
     def _modify_doc(self, doc):
-        doc=[(_Schema.id.name, "JE00-2")] + doc
+        doc=[(_Schema.id.name, "JE00-2")] + doc[:-1]
         return doc
 
     def _assert(self):
         self._assert_with(_FileSchemaError)
 
-class TestBadFieldOrder(TestError):
+class TestReverseFieldOrder(TestFileLoad):
     def _data(self):
         return ("JE00", 4, None, None)
 
@@ -162,55 +162,62 @@ class TestBadFieldOrder(TestError):
         return doc[::-1]    # reversed doc contents
 
     def _assert(self):
-        self._assert_with(_FileSchemaError)
+        self._run()
+        print "input file:\n  " + ",\n  ".join(self.__fdata())
+        self.assertEqual(self._saros.to_str(), repo._orig())
 
-class TestBadType(TestError):
+    def __fdata(self):
+        return [str((x, y)) for (x, y) in _File(self._fname)._read()]
+
+
+class TestBadType(TestFileLoad):
     def _data(self):
         return ("JE00", 4, _Schema.rev, "prem")
 
     def _assert(self):
         self._assert_with(_FileSchemaError)
 
-class TestBadName(TestError):
+class TestBadName(TestFileLoad):
     def _data(self):
         return ("JE00", 4, _Schema.name, " ")
 
     def _assert(self):
         self._assert_with(_FileDataError)
 
-class TestSizeMismatch(TestError):
+class TestSizeMismatch(TestFileLoad):
     def _data(self):
         return ("JE00", 2, None, None)
 
     def _modify_doc(self, doc):
         doc.append(("silly-me", "problem!"))
+        doc.insert(3, ("useless-me", "problem!"))
         return doc
 
     def _assert(self):
         self._assert_with(_FileSchemaError)
 
-class TestBadRevision(TestError):
+class TestBadRevision(TestFileLoad):
     def _data(self):
         return ("JE00", 4, _Schema.rev, 0)
 
     def _assert(self):
         self._assert_with(_FileDataError)
 
-class TestBadId(TestError):
+class TestBadId(TestFileLoad):
     def _data(self):
         return ("JE02", 2, _Schema.id, "JE02")
 
     def _assert(self):
         self._assert_with(_FileDataError)
 
-class TestBadPrev(TestError):
+class TestBadPrev(TestFileLoad):
     def _data(self):
         return ("JE02", 2, _Schema.prev, 3)
 
     def _assert(self):
         self._assert_with(_FileDataError)
 
-class TestBadLast(TestError):
+class TestBadLast(TestFileLoad):
     def _data(self):
         return ("JE04", 2, _Schema.last, 1)
 
@@ -218,7 +225,7 @@ class TestBadLast(TestError):
         self._assert_with(_FileDataError)
 
 
-class TestNoSuchId(TestError):
+class TestNoSuchId(TestFileLoad):
     def _data(self):
         return ("JE04", 2, None, None)
 
@@ -235,10 +242,10 @@ class TestNoSuchId(TestError):
     def _assert(self):
         self._assert_with(_NoSuchDocIdError)
 
-# `TestError` deleted; else, unittest will run it.
-# `TestError` is a base class, & doesn't test anything, so no need to run it.
-# for del(TestError) trick, see /u/ Wojciech B @ https://tinyurl.com/yb58qtae
-del(TestError)
+# `TestFileLoad` deleted; else, unittest will run it.
+# `TestFileLoad` is a base class, & doesn't test anything, so no need to run it.
+# for del(TestFileLoad) trick, see /u/ Wojciech B @ https://tinyurl.com/yb58qtae
+del(TestFileLoad)
 
 def main():
     # calls unittest.main() to run tests.

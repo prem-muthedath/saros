@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
 from aenum import Enum, NoAlias
+from collections import OrderedDict
 
 from ..error import (_FileSchemaError, _FileDataError,)
 
@@ -17,75 +18,79 @@ class _Schema(Enum):
     _order_ = 'id name rev prev last content'
     _settings_ = NoAlias
 
-    id=(str, 0)         # id column
-    name=(str, 1)       # name column
-    rev=(int, 2)        # revision column
-    prev=(int, 3)       # previous revision column
-    last=(int, 4)       # last revision column
-    content=(str, 5)    # content column
+    id=str         # id column
+    name=str       # name column
+    rev=int        # revision column
+    prev=int       # previous revision column
+    last=int       # last revision column
+    content=str    # content column
 
-    def __init__(self, _type, index):
+    def __init__(self, _type):
         # `_type`: data type defined for the column in schema.
-        # `index`: column position in the schema.
         self._type=_type
-        self._index=index
 
     @classmethod
     def _map(cls, _file):
-        # returns constraint-checked contents of `_file` as a schema map, an ord 
-        # dict with `_Schema` members as keys, that represents a saros doc with 
-        # name & revision; throws exception if data violate schema constraints.
-        doc=_file._schema_map()     # map file contents to schema
-        doc_id=cls._doc_id(doc[_Schema.name], doc[_Schema.rev])
-        if not doc[_Schema.name] or doc[_Schema.name].isspace():
-            header="doc 'name' is empty or whitespace in " + str(_file)
-            raise _FileDataError(header, doc.items())
-        if doc[_Schema.rev] < 1:
-            header="doc revision < 1 in " + str(_file)
-            raise _FileDataError(header, doc.items())
-        if doc[_Schema.id] != doc_id:
-            header="doc id not equal to '" + doc_id + "' in " + str(_file)
-            raise _FileDataError(header, doc.items())
-        if doc[_Schema.prev] not in [0, doc[_Schema.rev] - 1]:
-            header="doc's 'prev' neither 0 nor 'rev' - 1 in " + str(_file)
-            raise _FileDataError(header, doc.items())
-        if doc[_Schema.last] < doc[_Schema.rev]:
-            header="doc's 'last' <  'rev' in " + str(_file)
-            raise _FileDataError(header, doc.items())
+        # maps file contents to schema, returning a constraint-checked map -- an 
+        # ord dict with `_Schema` items as keys.
+        doc=_file._schema_map()         # map file contents to schema
+        cls.__check(doc, str(_file))    # check schema constraints
         return doc
 
     @classmethod
+    def _map_doc(cls, fdoc, fstr):
+        # map `fdoc` -- doc data from file -- to schema.
+        # `fstr`: str representation of file -- source of `fdoc`.
+        # returns an ord dict with `_Schema` members as keys.
+        cpy=fdoc[:]         # keep copy for error report
+        doc=OrderedDict()
+        for col in _Schema:
+            positions=[i for i, (x, _) in enumerate(fdoc) if x==col.name]
+            if len(positions)==1:
+                doc[col]=fdoc.pop(positions[0])[1]
+            if len(positions) == 0:
+                hdr="db column '"+ col.name + "' missing in " + fstr
+                raise _FileSchemaError(hdr, col, cpy)
+            if len(positions) > 1:
+                hdr="db column '"+ col.name + "' duplicated in " + fstr
+                raise _FileSchemaError(hdr, col, cpy)
+            if type(doc[col]) != col._type:
+                hdr="db column '"+ col.name + "' data type wrong in " + fstr
+                raise _FileSchemaError(hdr, col, cpy)
+            if col == list(_Schema)[-1] and len(fdoc) > 0:
+                rogues=[x for (x, _) in fdoc]
+                hdr="non-schema columns '" + ", ".join(rogues) + "' in " + fstr
+                raise _FileSchemaError(hdr, col, cpy)
+        return doc
+
+    @classmethod
+    def __check(cls, doc, fstr):
+        # check schema constraints
+        doc_id=cls._doc_id(doc[_Schema.name], doc[_Schema.rev])
+        if not doc[_Schema.name] or doc[_Schema.name].isspace():
+            header="doc 'name' is empty or whitespace in " + fstr
+            raise _FileDataError(header, doc.items())
+        if doc[_Schema.rev] < 1:
+            header="doc revision < 1 in " + fstr
+            raise _FileDataError(header, doc.items())
+        if doc[_Schema.id] != doc_id:
+            header="doc id not equal to '" + doc_id + "' in " + fstr
+            raise _FileDataError(header, doc.items())
+        if doc[_Schema.prev] not in [0, doc[_Schema.rev] - 1]:
+            header="doc's 'prev' neither 0 nor 'rev' - 1 in " + fstr
+            raise _FileDataError(header, doc.items())
+        if doc[_Schema.last] < doc[_Schema.rev]:
+            header="doc's 'last' <  'rev' in " + fstr
+            raise _FileDataError(header, doc.items())
+
+    @classmethod
     def _doc_id(cls, name, rev):
-        # returns id of doc named `name`, revision `rev`
+        # returns id, the primary key, of doc named `name`, revision `rev`
         return name + "-" + str(rev)
 
-    def _associated_value(self, fdoc, ffname):
-        # `fdoc`: doc data from file named `ffname` = [(name, value)].
-        # `ffname`: full name (path & extn) of file -- source of `fdoc`.
-        #
-        # returns unique value associated with `self.name` from `fdoc` if data 
-        # index & type match those of `self`; throws exception otherwise.
-        positions=[i for i, (x, _) in enumerate(fdoc) if x==self.name]
-        if len(positions) == 0:
-            hdr="db column '"+ self.name + "' missing in " + ffname
-            raise _FileSchemaError(hdr, self, fdoc)
-        if len(positions) > 1:
-            hdr="db column '"+ self.name + "' duplicated in " + ffname
-            raise _FileSchemaError(hdr, self, fdoc)
-        if positions[0] != self._index:
-            hdr="db column '"+ self.name + "' in wrong order in " + ffname
-            raise _FileSchemaError(hdr, self, fdoc)
-        if positions[0] == len(_Schema) - 1 and len(fdoc) != len(_Schema):
-            hdr="the last column is not '" + self.name + "' in " + ffname
-            raise _FileSchemaError(hdr, self, fdoc)
-        if type(fdoc[self._index][1]) != self._type:
-            hdr="db column '"+ self.name + "' data type wrong in " + ffname
-            raise _FileSchemaError(hdr, self, fdoc)
-        return fdoc[self._index][1]
-
     def __str__(self):
-        # enum field as string.
-        return str((self.name, self._type, self._index))
+        # enum member as string.
+        return str((self.name, self._type))
 
 
 

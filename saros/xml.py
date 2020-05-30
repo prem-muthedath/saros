@@ -1,7 +1,6 @@
 #!/usr/bin/python
 
 import os
-from collections import OrderedDict
 
 from .database.schema import _Schema
 
@@ -123,14 +122,11 @@ class _File:
         self._write(doc)
 
     def _schema_map(self):
-        # maps data to schema; returns ord dict with `_Schema` members as keys.
-        fdoc=self._read()
-        doc=OrderedDict()
-        for col in _Schema:
-            doc[col]=col._associated_value(fdoc[:], self.__full_name())
-        return doc
+        # returns schema map (ord dict with schema items as keys) of contents.
+        return _Schema._map_doc(self._read(), self.__str__())
 
     def __str__(self):
+        # str representation.
         return self.__full_name()
 
 

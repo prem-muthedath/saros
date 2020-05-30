@@ -23,23 +23,23 @@ class _FileSchemaError(Exception):
     def __cdata(self):
         # db column details, as str.
         return "\n => error @ valid db column " + \
-                "(col name, data type, schema-position):\n  " + \
+                "(col name, data type):\n  " + \
                 self.__col.__str__()
 
     def __pdata(self):
         # parsed file data, with additional details, in string format.
-        data=[self.__grp(x, y, i) for i, (x, y) in enumerate(self.__fdoc)]
+        data=[self.__grp(x, y) for (x, y) in self.__fdoc]
         return "\n => parsed file data as " + \
-                "(col name, val, type, position):\n  " + ",\n  ".join(data)
+                "(col name, val, type):\n  " + ",\n  ".join(data)
 
-    def __grp(self, x, y, z):
-        # `(name, val, data_type, position)` as str.
-        grp=(x, y, type(y), z)
+    def __grp(self, x, y):
+        # `(name, val, data_type)` as str.
+        grp=(x, y, type(y))
         return str(grp)
 
     def __sdata(self):
         # db schema, in string format.
-        return "\n => FYI - valid db schema (col name, type, position):\n  " + \
+        return "\n => FYI - valid db schema (col name, type):\n  " + \
                 ",\n  ".join([i.__str__() for i in self.__col.__class__])
 
 
