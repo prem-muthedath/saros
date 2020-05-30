@@ -7,7 +7,7 @@ class _FileSchemaError(Exception):
     # represents error when doc file schema is nonconformant with db schema.
     def __init__(self, header, col, fdoc):
         # `header`: error headline.
-        # `col`: db column related to error.
+        # `col`: `_Schema` member (i.e., db column) related to error.
         # `fdoc`: parsed doc data from file = [(name, val), ..., (name, val)]
         self.__header=header
         self.__col=col
@@ -42,9 +42,10 @@ class _FileSchemaError(Exception):
         return "\n => FYI - valid db schema (col name, type):\n  " + \
                 ",\n  ".join([i.__str__() for i in self.__col.__class__])
 
+################################################################################
 
 class _FileDataError(Exception):
-    # represents error when doc file data is nonconformant with saros db.
+    # error when doc file data are nonconformant with db schema constraints.
     def __init__(self, header, fdoc):
         # `header`: error headline.
         # `fdoc`: parsed data from file = [(_Schema.member, value), ..., ]
@@ -60,6 +61,7 @@ class _FileDataError(Exception):
         return "\n => file data:\n  " + \
                 ",\n  ". join([str((i.name, j)) for (i, j) in self.__fdoc])
 
+################################################################################
 
 class _NoSuchDocIdError(Exception):
     # represents error when doc id does not exist in saros db.
@@ -68,20 +70,22 @@ class _NoSuchDocIdError(Exception):
 
     def __str__(self):
         # err msg.
-        return "doc id generated from `name` & `rev` values " + \
-                "does not exist in the db." + \
-                "\n => doc id: '" + self.__id + "'"
+        return "doc id '" + self.__id + "', generated from `name` & `rev` " + \
+                "values, does not exist in the db."
 
+################################################################################
 
 class _NoSuchColumnError(Exception):
     # represents error when column does not exist in saros db.
     def __init__(self, doc_id, col):
+        # `col`: `_Schema` member (i.e., db column) related to error.
         self.__id=doc_id
         self.__col=col
 
     def __str__(self):
         # err msg.
-        return "No such column '" + self.__col + "' exists in db " + \
+        return "No such column '" + self.__col.name + "' exists in db " + \
                 "for doc id: '" + self.__id + "'"
 
+################################################################################
 

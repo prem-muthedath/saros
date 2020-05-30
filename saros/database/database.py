@@ -76,7 +76,7 @@ class _SarosDB:
     @classmethod
     def _dump(cls):
         # dump of all docs & their `id`s, sorted by `id`
-        # returns [(doc_id, doc_data)], where doc_data=[(column, value)]
+        # returns [(doc_id, doc_data)], where doc_data=[(col_name, value)]
         dump=[]
         for _id in sorted(cls.__docs):
             data=cls.__doc_data(_id)    # fix for a nasty bug
@@ -160,7 +160,7 @@ class _SarosDB:
         doc=cls.__doc_data_dict(doc_id)
         if doc.has_key(col.name):
             return doc[col.name]
-        raise _NoSuchColumnError(doc_id, col.name)
+        raise _NoSuchColumnError(doc_id, col)
 
     @classmethod
     def __put(cls, doc_id, data):
@@ -168,7 +168,7 @@ class _SarosDB:
         doc=cls.__doc_data_dict(doc_id)
         for (col, val) in data:
             if not doc.has_key(col.name):
-                raise _NoSuchColumnError(doc_id, col.name)
+                raise _NoSuchColumnError(doc_id, col)
             doc[col.name]=val
         cls.__docs[doc_id]=doc.items()
 
