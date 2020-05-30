@@ -41,7 +41,7 @@ class _Schema(Enum):
     def _map_doc(cls, fdoc, fstr):
         # map `fdoc` -- doc data from file -- to schema.
         # `fstr`: str representation of file -- source of `fdoc`.
-        # returns an ord dict with `_Schema` members as keys.
+        # returns an ord dict (i.e., the map) with `_Schema` members as keys.
         cpy=fdoc[:]         # keep copy for error report
         doc=OrderedDict()
         for col in _Schema:
