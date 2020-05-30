@@ -40,6 +40,7 @@ class _Schema(Enum):
     @classmethod
     def _map_doc(cls, fdoc, fstr):
         # map `fdoc` -- doc data from file -- to schema.
+        # `fdoc`: [(name, value), ..., (name, value)]
         # `fstr`: str representation of file -- source of `fdoc`.
         # returns an ord dict (i.e., the map) with `_Schema` members as keys.
         cpy=fdoc[:]         # keep copy for error report
