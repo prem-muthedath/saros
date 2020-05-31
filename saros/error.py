@@ -55,8 +55,20 @@ class _NoSuchColumnError(Exception):
 
     def __str__(self):
         # err msg.
-        return "No such column '" + self.__col.name + "' exists in db " + \
+        return "no such column '" + self.__col.name + "' exists in db " + \
                 "for doc id: '" + self.__id + "'"
 
 ################################################################################
+
+class _FileError(Exception):
+    # represents error when file or directory doesn't exist.
+    def __init__(self, msg):
+        # msg: err message
+        self.__msg=msg
+
+    def __str__(self):
+        return self.__msg
+
+################################################################################
+
 

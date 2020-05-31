@@ -3,6 +3,7 @@
 import os
 
 from .database.schema import _Schema
+from .error import _FileError
 
 # this module contains private classes that do back-and-forth conversion between 
 # a (name, value) pair & its XML element representation -- <name>value</name>
@@ -92,12 +93,20 @@ class _File:
     def __full_name(self):
         # returns full name of xml file: full path + file name + extension
         # example: ~/../saros/saros/temp/doc.xml
-        return self.___path()+self.__name+self.__type()
+        ffname=self.___path()+self.__name+self.__type()
+        if not os.path.isfile(ffname):
+            msg="file '" + ffname + "' does not exist."
+            raise _FileError(msg)
+        return ffname
 
     def ___path(self):
         # returns full path to the xml file
-        return os.path.dirname(os.path.realpath(__file__))+ \
+        dfname=os.path.dirname(os.path.realpath(__file__))+ \
                 "/"+self.__directory()+"/"
+        if not os.path.isdir(dfname):
+            msg="directory '" + dfname + "' does not exist. please create it."
+            raise _FileError(msg)
+        return dfname
 
     def __directory(self):
         # directory containing the xml file
