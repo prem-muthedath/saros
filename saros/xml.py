@@ -79,7 +79,7 @@ class _File:
                 writer.write(_Attribute(each)._to_xml())
                 writer.write("\n")
 
-    def _read(self):
+    def __read(self):
         # reads xml file, returning document as an array of attributes
         # `doc` = array of document attributes = [(name, val), ..., (name, val)]
         doc=[]
@@ -115,7 +115,7 @@ class _File:
     def __update(self, field, value):
         # update value of `field` in xml file
         doc=[]
-        for (name, val) in self._read():
+        for (name, val) in self.__read():
             if name == field.name:
                 val=value
             doc.append((name, val))
@@ -123,7 +123,7 @@ class _File:
 
     def _schema_map(self):
         # returns schema map (ord dict with schema items as keys) of contents.
-        return _Schema._map_doc(self._read(), self.__str__())
+        return _Schema._map_doc(self.__read(), self.__str__())
 
     def __str__(self):
         # str representation.
