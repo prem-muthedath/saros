@@ -92,21 +92,22 @@ class _File:
 
     def __full_name(self):
         # returns full name of xml file: full path + file name + extension
-        # example: ~/../saros/saros/temp/doc.xml
-        ffname=self.___path()+self.__name+self.__type()
+        # example: '~/../saros/saros/temp/doc.xml'
+        ffname=self.__path()+self.__name+self.__type()
         if not os.path.isfile(ffname):
             msg="file '" + ffname + "' does not exist."
             raise _FileError(msg)
         return ffname
 
-    def ___path(self):
-        # returns full path to the xml file
-        dfname=os.path.dirname(os.path.realpath(__file__))+ \
+    def __path(self):
+        # returns full path to the xml file.
+        # example: '~/../saros/saros/temp/'
+        fpath=os.path.dirname(os.path.realpath(__file__))+ \
                 "/"+self.__directory()+"/"
-        if not os.path.isdir(dfname):
-            msg="directory '" + dfname + "' does not exist. please create it."
+        if not os.path.isdir(fpath):
+            msg="directory '" + fpath + "' does not exist. please create it."
             raise _FileError(msg)
-        return dfname
+        return fpath
 
     def __directory(self):
         # directory containing the xml file
