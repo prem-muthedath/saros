@@ -5,37 +5,15 @@
 
 class _FileSchemaError(Exception):
     # represents error when doc file schema is nonconformant with db schema.
-    def __init__(self, header, col, fdoc):
+    def __init__(self, header, col):
         # `header`: error headline.
         # `col`: `_Schema` member (i.e., db column) related to error.
-        # `fdoc`: parsed doc data from file = [(name, val), ..., (name, val)]
         self.__header=header
         self.__col=col
-        self.__fdoc=fdoc
 
     def __str__(self):
         # err msg.
-        return self.__header + \
-                self.__cdata() + \
-                self.__pdata() + \
-                self.__sdata()
-
-    def __cdata(self):
-        # db column details, as str.
-        return "\n => error @ valid db column " + \
-                "(col name, data type):\n  " + \
-                self.__col.__str__()
-
-    def __pdata(self):
-        # parsed file data, with additional details, in string format.
-        data=[self.__grp(x, y) for (x, y) in self.__fdoc]
-        return "\n => parsed file data as " + \
-                "(col name, val, type):\n  " + ",\n  ".join(data)
-
-    def __grp(self, x, y):
-        # `(name, val, data_type)` as str.
-        grp=(x, y, type(y))
-        return str(grp)
+        return self.__header + self.__sdata()
 
     def __sdata(self):
         # db schema, in string format.
@@ -46,20 +24,13 @@ class _FileSchemaError(Exception):
 
 class _FileDataError(Exception):
     # error when doc file data are nonconformant with db schema constraints.
-    def __init__(self, header, fdoc):
+    def __init__(self, header):
         # `header`: error headline.
-        # `fdoc`: parsed data from file = [(_Schema.member, value), ..., ]
         self.__header=header
-        self.__fdoc=fdoc
 
     def __str__(self):
         # err msg.
-        return self.__header + self.__pdata()
-
-    def __pdata(self):
-        # parsed file data as str.
-        return "\n => file data:\n  " + \
-                ",\n  ". join([str((i.name, j)) for (i, j) in self.__fdoc])
+        return self.__header
 
 ################################################################################
 

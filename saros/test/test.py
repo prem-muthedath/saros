@@ -55,7 +55,7 @@ class Test(unittest.TestCase):
         self._print("AFTER")
         self.assertEqual(self._saros.to_str(), repo._expected())
 
-    def _print(self, _str):
+    def _print(self, _str=""):
         # formats & prints saros db state as a string.
         print("SAROS REPOSITORY STATE " +  _str + ": \n" + \
                 self._saros.to_str() + "\n")
@@ -86,6 +86,7 @@ class TestFileLoad(Test):
             self._load()
         print "exception: ", cn.exception.__class__.__name__, \
                 "| msg => ", cn.exception
+        self._print()
         self.assertEqual(self._saros.to_str(), repo._orig())
 
     def _setup(self):
@@ -95,6 +96,12 @@ class TestFileLoad(Test):
     def _doc(self):
         # returns test doc data = [(name, value), ..., (name, value)]
         pass
+
+    def _print(self, _str=""):
+        print "=> file data:\n  " + ",\n  ".join(self.__fdata())
+
+    def __fdata(self):
+        return [str((x, y)) for (x, y) in self._doc()]
 
 ##############################################################################
 
@@ -264,14 +271,8 @@ class TestReverseFieldOrder(TestFileLoad):
 
     def _assert(self):
         self._load()
-        self.__print()
+        self._print()
         self.assertEqual(self._saros.to_str(), repo._orig())
-
-    def __print(self):
-        print "=> file data:\n  " + ",\n  ".join(self.__fdata())
-
-    def __fdata(self):
-        return [str((x, y)) for (x, y) in self._doc()]
 
 ##############################################################################
 
