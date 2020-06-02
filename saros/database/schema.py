@@ -1,12 +1,11 @@
 #!/usr/bin/python
 
 from aenum import Enum, NoAlias
-from collections import OrderedDict
 
-from ..error import (_FileSchemaError, _FileDataError,)
+from ..error import _FileDataError
 
 # this module defines the database schema.
-# ##############################################################################
+################################################################################
 
 class _Schema(Enum):
     # represents db schema.
@@ -30,58 +29,26 @@ class _Schema(Enum):
         self._type=_type
 
     @classmethod
-    def _map(cls, _file):
-        # maps file contents to schema, returning a constraint-checked map -- an 
-        # ord dict with `_Schema` items as keys.
-        doc=_file._schema_map()         # map file contents to schema
-        cls.__check(doc, str(_file))    # check schema constraints
-        return doc
-
-    @classmethod
-    def _map_doc(cls, fdoc, fstr):
-        # map `fdoc` -- doc data from file -- to schema.
-        # `fdoc`: [(name, value), ..., (name, value)]
-        # `fstr`: str representation of file -- source of `fdoc`.
-        # returns an ord dict (i.e., the map) with `_Schema` members as keys.
-        doc=OrderedDict()
-        for col in _Schema:
-            positions=[i for i, (x, _) in enumerate(fdoc) if x==col.name]
-            if len(positions)==1:
-                doc[col]=fdoc.pop(positions[0])[1]
-            if len(positions) == 0:
-                hdr="db column '"+ col.name + "' missing in " + fstr
-                raise _FileSchemaError(hdr, col)
-            if len(positions) > 1:
-                hdr="db column '"+ col.name + "' duplicated in " + fstr
-                raise _FileSchemaError(hdr, col)
-            if type(doc[col]) != col._type:
-                typstr=" data type != '" + col._type.__name__ + "' "
-                hdr="db column '"+ col.name + "'" + typstr + "in " + fstr
-                raise _FileSchemaError(hdr, col)
-            if col == list(_Schema)[-1] and len(fdoc) > 0:
-                rogues=[x for (x, _) in fdoc]
-                hdr="non-schema columns '" + ", ".join(rogues) + "' in " + fstr
-                raise _FileSchemaError(hdr, col)
-        return doc
-
-    @classmethod
-    def __check(cls, doc, fstr):
-        # check schema constraints
+    def _check(cls, doc, fdoc):
+        # check `doc` against schema constraints.
+        # `doc`: ord dict with `_Schema` items as keys; represents a saros doc.
+        # `fdoc`: instance of `_FDocument`.
+        # throws `_FileDataError` if `doc` invalid.
         doc_id=cls._doc_id(doc[_Schema.name], doc[_Schema.rev])
         if not doc[_Schema.name] or doc[_Schema.name].isspace():
-            header="doc 'name' is empty or whitespace in " + fstr
+            header=fdoc._hdr("doc 'name' is empty or whitespace")
             raise _FileDataError(header)
         if doc[_Schema.rev] < 1:
-            header="doc revision < 1 in " + fstr
+            header=fdoc._hdr("doc revision < 1")
             raise _FileDataError(header)
         if doc[_Schema.id] != doc_id:
-            header="doc id not equal to '" + doc_id + "' in " + fstr
+            header=fdoc._hdr("doc id not equal to '" + doc_id + "'")
             raise _FileDataError(header)
         if doc[_Schema.prev] not in [0, doc[_Schema.rev] - 1]:
-            header="doc's 'prev' neither 0 nor 'rev' - 1 in " + fstr
+            header=fdoc._hdr("doc's 'prev' neither 0 nor 'rev' - 1")
             raise _FileDataError(header)
         if doc[_Schema.last] < doc[_Schema.rev]:
-            header="doc's 'last' <  'rev' in " + fstr
+            header=fdoc._hdr("doc's 'last' <  'rev'")
             raise _FileDataError(header)
 
     @classmethod
@@ -92,7 +59,6 @@ class _Schema(Enum):
     def __str__(self):
         # enum member as string.
         return str((self.name, self._type))
-
 
 
 

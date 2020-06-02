@@ -121,7 +121,7 @@ class _SarosDB:
         # NOTE: `fname` does NOT include path & extn.
         #
         # `doc`: doc data as an ordered dict with `_Schema` members as keys.
-        doc=_Schema._map(_File(fname))
+        doc=_File(fname)._schema_map()
         doc_id=doc.pop(_Schema.id)
         cls.__put(doc_id, doc.items())      # load doc into db
         if link:

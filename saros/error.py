@@ -1,13 +1,13 @@
 #!/usr/bin/python
 
 # error module -- contains all exceptions classes in saros application.
-# ##############################################################################
+################################################################################
 
 class _FileSchemaError(Exception):
     # represents error when doc file schema is nonconformant with db schema.
     def __init__(self, header, col):
         # `header`: error headline.
-        # `col`: `_Schema` member (i.e., db column) related to error.
+        # `col`: `_Schema` member related to error.
         self.__header=header
         self.__col=col
 
@@ -49,7 +49,7 @@ class _NoSuchDocIdError(Exception):
 class _NoSuchColumnError(Exception):
     # represents error when column does not exist in saros db.
     def __init__(self, doc_id, col):
-        # `col`: `_Schema` member (i.e., db column) related to error.
+        # `col`: `_Schema` member related to error.
         self.__id=doc_id
         self.__col=col
 
@@ -57,17 +57,6 @@ class _NoSuchColumnError(Exception):
         # err msg.
         return "no such column '" + self.__col.name + "' exists in db " + \
                 "for doc id: '" + self.__id + "'"
-
-################################################################################
-
-class _FileError(Exception):
-    # represents error when file or directory doesn't exist.
-    def __init__(self, msg):
-        # msg: err message
-        self.__msg=msg
-
-    def __str__(self):
-        return self.__msg
 
 ################################################################################
 

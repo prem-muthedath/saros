@@ -189,12 +189,12 @@ class TestSizeMismatch(TestFileLoad):
 class TestBadName(TestFileLoad):
     def _doc(self):
         return [
-                ("id", "J00-4"),
+                ("id", " -4"),
                 ("name", " "),
                 ("rev", 4),
                 ("prev", 0),
                 ("last", 6),
-                ("content", "i am JE00-4")
+                ("content", "i am  -4")
             ]
 
     def _assert(self):
@@ -203,12 +203,12 @@ class TestBadName(TestFileLoad):
 class TestBadRevision(TestFileLoad):
     def _doc(self):
         return [
-                ("id", "J00-4"),
+                ("id", "J00-0"),
                 ("name", "JE00"),
                 ("rev", 0),
                 ("prev", 0),
                 ("last", 6),
-                ("content", "i am JE00-4")
+                ("content", "i am JE00-0")
             ]
 
     def _assert(self):

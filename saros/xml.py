@@ -1,9 +1,10 @@
 #!/usr/bin/python
 
 import os
+from collections import OrderedDict
 
 from .database.schema import _Schema
-from .error import _FileError
+from .error import _FileSchemaError
 
 # this module contains private classes that do back-and-forth conversion between 
 # a (name, value) pair & its XML element representation -- <name>value</name>
@@ -24,6 +25,7 @@ class _Attribute:
             return str(self.__val)
         return self.__val
 
+################################################################################
 
 class _Element:
     # represents an xml element -- from start-to-end tag
@@ -39,7 +41,8 @@ class _Element:
     def __validate(self):
         if not ( self.__element.startswith("<") and \
                  self.__element.endswith(">") ):
-            raise RuntimeError("invalid xml element: not begin/end with <, > => " + self.__element)
+            raise RuntimeError("invalid xml element: '" + self.__element + \
+                    "' does not begin/end with '<', '>'")
 
     def __name(self):
         # "<" is the first one, so we skip it & get substring from 1:
@@ -59,11 +62,13 @@ class _Element:
         return self.__element.index("</")
 
     def __num(self, val):
+        if ' ' in val: return val
         try:
             return int(val)
         except ValueError:
             return val
 
+################################################################################
 
 class _File:
     # represents an xml file that has complete info about a document.
@@ -71,6 +76,8 @@ class _File:
         # `name` is name of xml file
         # NOTE: `name` does NOT include file path and file extension
         self.__name = name
+        self.__extn = ".xml"    # xml file extension
+        self.__dir = "temp"     # directory containing the xml file
 
     def _write(self, doc):
         # writes `doc` as an xml.  `doc` represents a document as an array of 
@@ -93,29 +100,13 @@ class _File:
     def __full_name(self):
         # returns full name of xml file: full path + file name + extension
         # example: '~/../saros/saros/temp/doc.xml'
-        ffname=self.__path()+self.__name+self.__type()
-        if not os.path.isfile(ffname):
-            msg="file '" + ffname + "' does not exist."
-            raise _FileError(msg)
-        return ffname
+        return self.__path() + self.__name + self.__extn
 
     def __path(self):
         # returns full path to the xml file.
         # example: '~/../saros/saros/temp/'
-        fpath=os.path.dirname(os.path.realpath(__file__))+ \
-                "/"+self.__directory()+"/"
-        if not os.path.isdir(fpath):
-            msg="directory '" + fpath + "' does not exist. please create it."
-            raise _FileError(msg)
-        return fpath
-
-    def __directory(self):
-        # directory containing the xml file
-        return "temp"
-
-    def __type(self):
-        # xml file extension
-        return ".xml"
+        return os.path.dirname(os.path.realpath(__file__)) + \
+                "/" + self.__dir + "/"
 
     def _link(self, prev, db):
         # link doc represented by this file to previous revision `prev`
@@ -132,11 +123,55 @@ class _File:
         self._write(doc)
 
     def _schema_map(self):
-        # returns schema map (ord dict with schema items as keys) of contents.
-        return _Schema._map_doc(self.__read(), self.__str__())
+        # valid schema map (ord dict with schema items as keys) of contents.
+        return _FDocument(self.__read(), self.__full_name())._schema_map()
 
-    def __str__(self):
-        # str representation.
-        return self.__full_name()
+################################################################################
+
+class _FDocument:
+    # `_FDocument', aka "file document", models contents of file named `ffname`
+    def __init__(self, contents, ffname):
+        # `contents` = [(name, value), ..., (name, value)]
+        # `ffname`: full file name = path + name + extn
+        self.__contents=contents
+        self.__ffname=ffname
+
+    def _schema_map(self):
+        # constrained-checked schema map of contents.
+        # map: ord dict with `_Schema` members as keys.
+        doc=self.__map(self.__contents[:])
+        _Schema._check(doc, self)
+        return doc
+
+    def __map(self, fdoc):
+        # maps `fdoc` -- doc data from file -- to schema.
+        # returns an ord dict (i.e., the map) with `_Schema` members as keys.
+        # throws `_FileSchemaError` under schema violation.
+        doc=OrderedDict()
+        for col in _Schema:
+            positions=[i for i, (x, _) in enumerate(fdoc) if x==col.name]
+            if len(positions)==1:
+                doc[col]=fdoc.pop(positions[0])[1]
+            if len(positions) == 0:
+                hdr=self._hdr("schema column '"+ col.name + "' missing")
+                raise _FileSchemaError(hdr, col)
+            if len(positions) > 1:
+                hdr=self._hdr("schema column '"+ col.name + "' duplicated")
+                raise _FileSchemaError(hdr, col)
+            if type(doc[col]) != col._type:
+                typstr="data type != '" + col._type.__name__ + "'"
+                hdr=self._hdr("schema column '"+ col.name + "' " + typstr)
+                raise _FileSchemaError(hdr, col)
+            if col == list(_Schema)[-1] and len(fdoc) > 0:
+                rogues=", ".join([x for (x, _) in fdoc])
+                hdr=self._hdr("non-schema columns '" + rogues + "'")
+                raise _FileSchemaError(hdr, col)
+        return doc
+
+    def _hdr(self, errhdr):
+        # appends file name part to `errhdr` (i.e., error header)
+        return errhdr + " in '" + self.__ffname + "'"
+
+################################################################################
 
 
