@@ -168,6 +168,21 @@ class TestBadType(TestFileLoad):
     def _assert(self):
         self._assert_with(_FileSchemaError)
 
+class TestBadIdType(TestFileLoad):
+    # happens when `name` is empty.
+    def _doc(self):
+        return [
+                ("id", "-4"),
+                ("name", ""),
+                ("rev", 4),
+                ("prev", 3),
+                ("last", 6),
+                ("content", "i am -4")
+            ]
+
+    def _assert(self):
+        self._assert_with(_FileSchemaError)
+
 class TestSizeMismatch(TestFileLoad):
     def _doc(self):
         return [

@@ -17,7 +17,8 @@ class _Attribute:
 
     def _to_xml(self):
         # returns an xml element "<name>value</name>"
-        return "<" + self.__name + ">" + self.__good_val() + "</" + self.__name + ">"
+        return "<" + self.__name + ">" + \
+                self.__good_val() + "</" + self.__name + ">"
 
     def __good_val(self):
         # converts int to str
@@ -62,7 +63,7 @@ class _Element:
         return self.__element.index("</")
 
     def __num(self, val):
-        if ' ' in val: return val
+        if ' ' in val: return val   # fix for bug, such as  " -4"
         try:
             return int(val)
         except ValueError:
