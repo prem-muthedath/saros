@@ -15,7 +15,7 @@ class _Document:
     def _link_revs(self):
         # links all unlinked revs of `self.__name` to form a single rev chain.
         # NOTE:
-        # 1. broken rev link is where a rev is without a valid prev.
+        # 1. broken rev link is where a rev & it's prev have different `last`.
         # 2. saros revisions start from 1, so rev = 1 does not have a prev.
         # 3. therefore, skip the first rev, as it can not have a broken link.
         # 4. so we loop from [1:], but index starts @ 0, so index -> prev item.
