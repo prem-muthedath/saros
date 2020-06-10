@@ -132,7 +132,7 @@ class _File:
 class _FDocument:
     # `_FDocument', aka "file document", models contents of file named `ffname`
     def __init__(self, contents, ffname):
-        # `contents` = [(name, value), ..., (name, value)]
+        # `contents` = parsed file data = [(name, value), ..., (name, value)]
         # `ffname`: full file name = path + name + extn
         self.__contents=contents
         self.__ffname=ffname
