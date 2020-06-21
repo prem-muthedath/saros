@@ -150,17 +150,17 @@ class _File:
 
     def _schema_map(self):
         # valid schema map (ord dict with schema items as keys) of contents.
-        return _FDocument(self.__parse(), self.__full_name())._schema_map()
+        return _FDocument(self.__full_name(), self.__parse())._schema_map()
 
 ################################################################################
 
 class _FDocument:
     # `_FDocument', aka "file document", models contents of file named `ffname`
-    def __init__(self, contents, ffname):
-        # `contents` = parsed file data = [(name, value), ..., (name, value)]
+    def __init__(self, ffname, contents):
         # `ffname`: full file name = path + name + extn
-        self.__contents=contents
+        # `contents` = parsed file data = [(name, value), ..., (name, value)]
         self.__ffname=ffname
+        self.__contents=contents
 
     def _schema_map(self):
         # constrained-checked schema map of contents.
