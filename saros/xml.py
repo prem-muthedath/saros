@@ -120,8 +120,8 @@ class _File:
                 writer.write("\n")
 
     def __parse(self):
-        # parses xml file, returning document as an array of attributes
-        # returns an array of doc attributes = [(name, val), ..., (name, val)]
+        # parses xml file, returning document as a list of attributes
+        # document attributes list = [(name, val), ..., (name, val)]
         xml=[]
         with open(self.__full_name(), 'r') as reader:
             xml=[line.rstrip() for line in reader]
