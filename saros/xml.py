@@ -45,14 +45,14 @@ class _Attribute:
 
 class _Xml:
     # represents an xml document
-    def __init__(self, elements):
-        # elements = ['<xml>', '<name>value</name>', ..., '</xml>']
-        self.__elements=elements
+    def __init__(self, xml):
+        # `xml` = ['<xml>', '<name>value</name>', ..., '</xml>']
+        self.__xml=xml
 
     def _parse(self):
         # extracts [(name, val)]
         result=[]
-        for element in self.__elements[1:-1]:   # skip 'xml' header, footer
+        for element in self.__xml[1:-1]:   # skip 'xml' header, footer
             result.append(_Element(element)._parse())
         return result
 
@@ -121,11 +121,11 @@ class _File:
 
     def __parse(self):
         # parses xml file, returning document as an array of attributes
-        # `doc` = array of document attributes = [(name, val), ..., (name, val)]
-        doc=[]
+        # returns an array of doc attributes = [(name, val), ..., (name, val)]
+        xml=[]
         with open(self.__full_name(), 'r') as reader:
-            doc=[line.rstrip() for line in reader]
-        return _Xml(doc)._parse()
+            xml=[line.rstrip() for line in reader]
+        return _Xml(xml)._parse()
 
     def __full_name(self):
         # returns full name of xml file: full path + file name + extension
