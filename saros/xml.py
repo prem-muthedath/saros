@@ -7,7 +7,22 @@ from .database.schema import _Schema
 from .error import _FileSchemaError
 
 # this module contains private classes that do back-and-forth conversion between 
-# a (name, value) pair & its XML element representation -- <name>value</name>
+# (name, value) pairs & its XML element representation -- <name>value</name>
+################################################################################
+
+class _Attributes:
+    # represents [(name, value)] -- i.e., xml attributes
+    def __init__(self, attrs):
+        # `attrs` = [(name, val), ..., (name, val)]
+        self.__attrs=attrs
+
+    def _to_xml(self):
+        # returns xml = ['<xml>', "<name>value</name>", ..., '</xml>']
+        # for `join()` trick, see /u/ RiaD @ https://tinyurl.com/y8ypjowj
+        elems=[_Attribute(i)._to_xml() for i in self.__attrs]
+        xml='\n'.join([''] + elems + [''])
+        return _Attribute(('xml', xml))._to_xml().split('\n')
+
 ################################################################################
 
 class _Attribute:
@@ -25,6 +40,21 @@ class _Attribute:
         if isinstance(self.__val, int):
             return str(self.__val)
         return self.__val
+
+################################################################################
+
+class _Xml:
+    # represents an xml document
+    def __init__(self, elements):
+        # elements = ['<xml>', '<name>value</name>', ..., '</xml>']
+        self.__elements=elements
+
+    def _parse(self):
+        # extracts [(name, val)]
+        result=[]
+        for element in self.__elements[1:-1]:   # skip 'xml' header, footer
+            result.append(_Element(element)._parse())
+        return result
 
 ################################################################################
 
@@ -49,14 +79,14 @@ class _Element:
         # "<" is the first one, so we skip it & get substring from 1:
         return self.__element[1:self.__fst_close()]
 
+    def __fst_close(self):
+        # index of first occurence of close tag symbol ">"
+        return self.__element.index(">")
+
     def __good_val(self):
         # we extract substring after ">", so add 1 to __fst_close()
         val=self.__element[self.__fst_close()+1:self.__snd_open()]
         return self.__num(val)
-
-    def __fst_close(self):
-        # index of first occurence of close tag symbol ">"
-        return self.__element.index(">")
 
     def __snd_open(self):
         # index of second occurence of open tag symbol "<" -- which is "</"
@@ -83,20 +113,19 @@ class _File:
     def _write(self, doc):
         # writes `doc` as an xml.  `doc` represents a document as an array of 
         # attributes = [(name, val), ..., (name, val)]
+        xml=_Attributes(doc)._to_xml()
         with open(self.__full_name(), 'w') as writer:
-            for each in doc:
-                writer.write(_Attribute(each)._to_xml())
+            for each in xml:
+                writer.write(each)
                 writer.write("\n")
 
-    def __read(self):
-        # reads xml file, returning document as an array of attributes
+    def __parse(self):
+        # parses xml file, returning document as an array of attributes
         # `doc` = array of document attributes = [(name, val), ..., (name, val)]
         doc=[]
         with open(self.__full_name(), 'r') as reader:
-            for line in reader:
-                line=line.rstrip()
-                doc.append(_Element(line)._parse())
-        return doc
+            doc=[line.rstrip() for line in reader]
+        return _Xml(doc)._parse()
 
     def __full_name(self):
         # returns full name of xml file: full path + file name + extension
@@ -111,21 +140,17 @@ class _File:
 
     def _link(self, prev, db):
         # link doc represented by this file to previous revision `prev`
-        self.__update(_Schema.prev, prev)
+        self.__update(_Schema.prev.name, prev)
         db._load(self.__name)
 
-    def __update(self, field, value):
-        # update value of `field` in xml file
-        doc=[]
-        for (name, val) in self.__read():
-            if name == field.name:
-                val=value
-            doc.append((name, val))
+    def __update(self, name, value):
+        # update value of field named `name` in xml file
+        doc=[(i, value) if i == name else (i, j) for (i, j) in self.__parse()]
         self._write(doc)
 
     def _schema_map(self):
         # valid schema map (ord dict with schema items as keys) of contents.
-        return _FDocument(self.__read(), self.__full_name())._schema_map()
+        return _FDocument(self.__parse(), self.__full_name())._schema_map()
 
 ################################################################################
 
