@@ -11,15 +11,15 @@ from .error import _FileSchemaError
 ################################################################################
 
 class _Attributes:
-    # represents [(name, value)] -- i.e., xml attributes
+    # represents [_Attribute]
     def __init__(self, attrs):
-        # `attrs` = [(name, val), ..., (name, val)]
+        # `attrs` = [_Attribute]
         self.__attrs=attrs
 
     def _to_xml(self):
-        # returns xml = ['<xml>', "<name>value</name>", ..., '</xml>']
+        # returns xml = ['<xml>', '<name>value</name>', ..., '</xml>']
         # for `join()` trick, see /u/ RiaD @ https://tinyurl.com/y8ypjowj
-        elems=[_Attribute(i)._to_xml() for i in self.__attrs]
+        elems=[each._to_xml() for each in self.__attrs]
         xml='\n'.join([''] + elems + [''])
         return _Attribute(('xml', xml))._to_xml().split('\n')
 
@@ -45,16 +45,10 @@ class _Attribute:
 
 class _Xml:
     # represents an xml document
-    def __init__(self, xml):
-        # `xml` = ['<xml>', '<name>value</name>', ..., '</xml>']
-        self.__xml=xml
-
-    def _parse(self):
+    def _parse(self, xml):
         # extracts [(name, val)]
-        result=[]
-        for element in self.__xml[1:-1]:   # skip 'xml' header, footer
-            result.append(_Element(element)._parse())
-        return result
+        # `xml` = ['<xml>', '<name>value</name>', ..., '</xml>']
+        return [_Element(i)._parse() for i in xml[1:-1]] # skip 'xml' hdr, ftr
 
 ################################################################################
 
@@ -113,7 +107,7 @@ class _File:
     def _write(self, doc):
         # writes `doc` as an xml.  `doc` represents a document as an array of 
         # attributes = [(name, val), ..., (name, val)]
-        xml=_Attributes(doc)._to_xml()
+        xml=_Attributes([_Attribute(attr) for attr in doc])._to_xml()
         with open(self.__full_name(), 'w') as writer:
             for each in xml:
                 writer.write(each)
@@ -125,7 +119,7 @@ class _File:
         xml=[]
         with open(self.__full_name(), 'r') as reader:
             xml=[line.rstrip() for line in reader]
-        return _Xml(xml)._parse()
+        return _Xml()._parse(xml)
 
     def __full_name(self):
         # returns full name of xml file: full path + file name + extension
