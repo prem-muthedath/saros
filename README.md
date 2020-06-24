@@ -24,7 +24,7 @@ This is an excercise in OO programming.  Guidelines followed:
        - in `class B` -> `C.another_method(var)`
 
 To run the program:
-  - You need python package `aenum`; install using `pip` if you don't have it.
+  - `aenum` package for `python 2.7.16` required; install using `pip` if needed.
   - `cd` to `saros` directory (where this `README` file is)
   - Type below command & press `ENTER`:
 
