@@ -76,10 +76,10 @@ class Test(unittest.TestCase):
 class TestFileLoad(Test):
     # base class for file load tests
     def _assert(self):
-        # assert expected error
+        # assert expected value
         pass
 
-    def _assert_with(self, exception):
+    def _assert_with(self, exception, msg):
         # assert with expected error, expected repo after error.
         # REF: https://docs.python.org/2/library/unittest.html
         with self.assertRaises(exception) as cn:
@@ -88,6 +88,7 @@ class TestFileLoad(Test):
                 "| msg => ", cn.exception
         self._print()
         self.assertEqual(self._saros.to_str(), repo._orig())
+        self.assertTrue(cn.exception.__str__().startswith(msg))
 
     def _setup(self):
         doc=self._doc()
@@ -110,7 +111,8 @@ class TestEmptyFile(TestFileLoad):
         return []
 
     def _assert(self):
-        self._assert_with(_FileSchemaError)
+        msg="schema column 'id' missing"
+        self._assert_with(_FileSchemaError, msg)
 
 class TestMissingColumn(TestFileLoad):
     def _doc(self):
@@ -123,7 +125,8 @@ class TestMissingColumn(TestFileLoad):
             ]
 
     def _assert(self):
-        self._assert_with(_FileSchemaError)
+        msg="schema column 'prev' missing"
+        self._assert_with(_FileSchemaError, msg)
 
 class TestDuplicate(TestFileLoad):
     def _doc(self):
@@ -138,7 +141,8 @@ class TestDuplicate(TestFileLoad):
             ]
 
     def _assert(self):
-        self._assert_with(_FileSchemaError)
+        msg="schema column 'last' duplicated"
+        self._assert_with(_FileSchemaError, msg)
 
 class TestConsecDuplicate(TestFileLoad):
     def _doc(self):
@@ -152,7 +156,8 @@ class TestConsecDuplicate(TestFileLoad):
             ]
 
     def _assert(self):
-        self._assert_with(_FileSchemaError)
+        msg="schema column 'id' duplicated"
+        self._assert_with(_FileSchemaError, msg)
 
 class TestBadType(TestFileLoad):
     def _doc(self):
@@ -166,7 +171,8 @@ class TestBadType(TestFileLoad):
             ]
 
     def _assert(self):
-        self._assert_with(_FileSchemaError)
+        msg="schema column 'rev' data type != 'int'"
+        self._assert_with(_FileSchemaError, msg)
 
 class TestBadIdType(TestFileLoad):
     # happens when `name` is empty.
@@ -181,7 +187,8 @@ class TestBadIdType(TestFileLoad):
             ]
 
     def _assert(self):
-        self._assert_with(_FileSchemaError)
+        msg="schema column 'id' data type != 'str'"
+        self._assert_with(_FileSchemaError, msg)
 
 class TestSizeMismatch(TestFileLoad):
     def _doc(self):
@@ -197,7 +204,8 @@ class TestSizeMismatch(TestFileLoad):
             ]
 
     def _assert(self):
-        self._assert_with(_FileSchemaError)
+        msg="non-schema columns 'useless-me, silly-me'"
+        self._assert_with(_FileSchemaError, msg)
 
 ##############################################################################
 
@@ -213,7 +221,8 @@ class TestBadName(TestFileLoad):
             ]
 
     def _assert(self):
-        self._assert_with(_FileDataError)
+        msg="doc 'name' is empty or whitespace"
+        self._assert_with(_FileDataError, msg)
 
 class TestBadRevision(TestFileLoad):
     def _doc(self):
@@ -227,7 +236,8 @@ class TestBadRevision(TestFileLoad):
             ]
 
     def _assert(self):
-        self._assert_with(_FileDataError)
+        msg="doc revision < 1"
+        self._assert_with(_FileDataError, msg)
 
 class TestBadId(TestFileLoad):
     def _doc(self):
@@ -241,7 +251,8 @@ class TestBadId(TestFileLoad):
             ]
 
     def _assert(self):
-        self._assert_with(_FileDataError)
+        msg="doc id not equal to 'JE02-2'"
+        self._assert_with(_FileDataError, msg)
 
 class TestBadPrev(TestFileLoad):
     def _doc(self):
@@ -255,7 +266,8 @@ class TestBadPrev(TestFileLoad):
             ]
 
     def _assert(self):
-        self._assert_with(_FileDataError)
+        msg="doc's 'prev' neither 0 nor 'rev' - 1"
+        self._assert_with(_FileDataError, msg)
 
 class TestBadLast(TestFileLoad):
     def _doc(self):
@@ -269,7 +281,8 @@ class TestBadLast(TestFileLoad):
             ]
 
     def _assert(self):
-        self._assert_with(_FileDataError)
+        msg="doc's 'last' <  'rev'"
+        self._assert_with(_FileDataError, msg)
 
 ##############################################################################
 
@@ -303,7 +316,9 @@ class TestNoSuchId(TestFileLoad):
             ]
 
     def _assert(self):
-        self._assert_with(_NoSuchDocIdError)
+        msg="doc id 'JE04-4', generated from `name` & `rev` values, " + \
+                "does not exist in the db."
+        self._assert_with(_NoSuchDocIdError, msg)
 
 ##############################################################################
 
