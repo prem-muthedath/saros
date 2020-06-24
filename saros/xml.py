@@ -54,7 +54,7 @@ class _Xml:
         self.__ffname=ffname
 
     def _parse(self):
-        # parses xml file, returning document as a list of attributes
+        # parses xml file, returning document as a list of attributes.
         # document attributes list = [(name, val), ..., (name, val)]
         xml=[]
         with open(self.__ffname, 'r') as reader:
@@ -62,7 +62,7 @@ class _Xml:
         return [_Element(i)._parse() for i in xml[1:-1]] # skip 'xml' hdr, ftr
 
     def _write(self, xml):
-        # writes `xml` to file named `self.__ffname`
+        # writes `xml` to file named `self.__ffname`.
         # `xml` = ['<xml>', '<name>value</name>', ..., '</xml>']
         with open(self.__ffname, 'w') as writer:
             for each in xml:
