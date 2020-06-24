@@ -17,7 +17,7 @@ class _Attributes:
         self.__attrs=attrs
 
     def _write(self, xml):
-        # writes xml representation of `self.__attrs` to file.
+        # writes it's xml representation to file.
         xml._write(self.__to_xml())
 
     def __to_xml(self):
