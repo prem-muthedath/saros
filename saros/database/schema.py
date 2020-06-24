@@ -29,26 +29,26 @@ class _Schema(Enum):
         self._type=_type
 
     @classmethod
-    def _check(cls, doc, fdoc):
+    def _check(cls, doc, xml):
         # check `doc` against schema constraints.
         # `doc`: ord dict with `_Schema` items as keys; represents a saros doc.
-        # `fdoc`: instance of `_FDocument`.
+        # `xml`: instance of `_Xml`.
         # throws `_FileDataError` if `doc` invalid.
         doc_id=cls._doc_id(doc[_Schema.name], doc[_Schema.rev])
         if not doc[_Schema.name] or doc[_Schema.name].isspace():
-            header=fdoc._hdr("doc 'name' is empty or whitespace")
+            header=xml._hdr("doc 'name' is empty or whitespace")
             raise _FileDataError(header)
         if doc[_Schema.rev] < 1:
-            header=fdoc._hdr("doc revision < 1")
+            header=xml._hdr("doc revision < 1")
             raise _FileDataError(header)
         if doc[_Schema.id] != doc_id:
-            header=fdoc._hdr("doc id not equal to '" + doc_id + "'")
+            header=xml._hdr("doc id not equal to '" + doc_id + "'")
             raise _FileDataError(header)
         if doc[_Schema.prev] not in [0, doc[_Schema.rev] - 1]:
-            header=fdoc._hdr("doc's 'prev' neither 0 nor 'rev' - 1")
+            header=xml._hdr("doc's 'prev' neither 0 nor 'rev' - 1")
             raise _FileDataError(header)
         if doc[_Schema.last] < doc[_Schema.rev]:
-            header=fdoc._hdr("doc's 'last' <  'rev'")
+            header=xml._hdr("doc's 'last' <  'rev'")
             raise _FileDataError(header)
 
     @classmethod
