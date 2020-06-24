@@ -82,6 +82,7 @@ class TestFileLoad(Test):
     def _assert_with(self, exception, msg):
         # assert with expected error, expected repo after error.
         # REF: https://docs.python.org/2/library/unittest.html
+        # `msg`: expected starting error message string.
         with self.assertRaises(exception) as cn:
             self._load()
         print "exception: ", cn.exception.__class__.__name__, \
