@@ -3,7 +3,7 @@
 import unittest
 
 from ..saros import Saros
-from ..database.database import _SarosDB
+from ..database.database import _SarosDB, _Schema
 from ..xml import _File
 from ..error import (_FileSchemaError, _FileDataError, _NoSuchDocIdError,)
 from . import repo
@@ -63,7 +63,7 @@ class Test(unittest.TestCase):
     def _reset(self):
         # reset saros db to its original state
         for (_id, doc) in self._docs:
-            doc=[("id", _id)] + doc
+            doc=[(_Schema.id.name, _id)] + doc
             _File(self._fname)._write(doc)
             self._load()
 
@@ -118,11 +118,11 @@ class TestEmptyFile(TestFileLoad):
 class TestMissingColumn(TestFileLoad):
     def _doc(self):
         return [
-                ("id", "J00-4"),
-                ("name", "JE00"),
-                ("rev", 4),
-                ("last", 6),
-                ("content", "i am JE00-4")
+                (_Schema.id.name, "J00-4"),
+                (_Schema.name.name, "JE00"),
+                (_Schema.rev.name, 4),
+                (_Schema.last.name, 6),
+                (_Schema.content.name, "i am JE00-4")
             ]
 
     def _assert(self):
@@ -132,13 +132,13 @@ class TestMissingColumn(TestFileLoad):
 class TestDuplicate(TestFileLoad):
     def _doc(self):
         return [
-                ("id", "JE00-2"),
-                ("name", "JE00"),
-                ("rev", 2),
-                ("prev", 1),
-                ("last", 3),
-                ("content", "i am JE00-2"),
-                ("last", 3),
+                (_Schema.id.name, "JE00-2"),
+                (_Schema.name.name, "JE00"),
+                (_Schema.rev.name, 2),
+                (_Schema.prev.name, 1),
+                (_Schema.last.name, 3),
+                (_Schema.content.name, "i am JE00-2"),
+                (_Schema.last.name, 3),
             ]
 
     def _assert(self):
@@ -148,12 +148,12 @@ class TestDuplicate(TestFileLoad):
 class TestConsecDuplicate(TestFileLoad):
     def _doc(self):
         return [
-                ("id", "JE00-2"),
-                ("id", "JE00-2"),
-                ("name", "JE00"),
-                ("rev", 2),
-                ("prev", 1),
-                ("last", 3)
+                (_Schema.id.name, "JE00-2"),
+                (_Schema.id.name, "JE00-2"),
+                (_Schema.name.name, "JE00"),
+                (_Schema.rev.name, 2),
+                (_Schema.prev.name, 1),
+                (_Schema.last.name, 3)
             ]
 
     def _assert(self):
@@ -163,12 +163,12 @@ class TestConsecDuplicate(TestFileLoad):
 class TestBadType(TestFileLoad):
     def _doc(self):
         return [
-                ("id", "J00-4"),
-                ("name", "JE00"),
-                ("rev", "prem"),
-                ("prev", 0),
-                ("last", 6),
-                ("content", "i am JE00-4")
+                (_Schema.id.name, "J00-4"),
+                (_Schema.name.name, "JE00"),
+                (_Schema.rev.name, "prem"),
+                (_Schema.prev.name, 0),
+                (_Schema.last.name, 6),
+                (_Schema.content.name, "i am JE00-4")
             ]
 
     def _assert(self):
@@ -179,12 +179,12 @@ class TestBadIdType(TestFileLoad):
     # happens when `name` is empty.
     def _doc(self):
         return [
-                ("id", "-4"),
-                ("name", ""),
-                ("rev", 4),
-                ("prev", 3),
-                ("last", 6),
-                ("content", "i am -4")
+                (_Schema.id.name, "-4"),
+                (_Schema.name.name, ""),
+                (_Schema.rev.name, 4),
+                (_Schema.prev.name, 3),
+                (_Schema.last.name, 6),
+                (_Schema.content.name, "i am -4")
             ]
 
     def _assert(self):
@@ -194,13 +194,13 @@ class TestBadIdType(TestFileLoad):
 class TestSizeMismatch(TestFileLoad):
     def _doc(self):
         return [
-                ("id", "JE00-2"),
-                ("name", "JE00"),
-                ("rev", 2),
+                (_Schema.id.name, "JE00-2"),
+                (_Schema.name.name, "JE00"),
+                (_Schema.rev.name, 2),
                 ("useless-me", "problem!"),
-                ("prev", 1),
-                ("last", 3),
-                ("content", "i am JE00-2"),
+                (_Schema.prev.name, 1),
+                (_Schema.last.name, 3),
+                (_Schema.content.name, "i am JE00-2"),
                 ("silly-me", "problem!")
             ]
 
@@ -213,12 +213,12 @@ class TestSizeMismatch(TestFileLoad):
 class TestBadName(TestFileLoad):
     def _doc(self):
         return [
-                ("id", " -4"),
-                ("name", " "),
-                ("rev", 4),
-                ("prev", 0),
-                ("last", 6),
-                ("content", "i am  -4")
+                (_Schema.id.name, " -4"),
+                (_Schema.name.name, " "),
+                (_Schema.rev.name, 4),
+                (_Schema.prev.name, 0),
+                (_Schema.last.name, 6),
+                (_Schema.content.name, "i am  -4")
             ]
 
     def _assert(self):
@@ -228,12 +228,12 @@ class TestBadName(TestFileLoad):
 class TestBadRevision(TestFileLoad):
     def _doc(self):
         return [
-                ("id", "J00-0"),
-                ("name", "JE00"),
-                ("rev", 0),
-                ("prev", 0),
-                ("last", 6),
-                ("content", "i am JE00-0")
+                (_Schema.id.name, "J00-0"),
+                (_Schema.name.name, "JE00"),
+                (_Schema.rev.name, 0),
+                (_Schema.prev.name, 0),
+                (_Schema.last.name, 6),
+                (_Schema.content.name, "i am JE00-0")
             ]
 
     def _assert(self):
@@ -243,12 +243,12 @@ class TestBadRevision(TestFileLoad):
 class TestBadId(TestFileLoad):
     def _doc(self):
         return [
-                ("id", "JE02"),
-                ("name", "JE02"),
-                ("rev", 2),
-                ("prev", 1),
-                ("last", 4),
-                ("content", "i am JE02-2")
+                (_Schema.id.name, "JE02"),
+                (_Schema.name.name, "JE02"),
+                (_Schema.rev.name, 2),
+                (_Schema.prev.name, 1),
+                (_Schema.last.name, 4),
+                (_Schema.content.name, "i am JE02-2")
             ]
 
     def _assert(self):
@@ -258,12 +258,12 @@ class TestBadId(TestFileLoad):
 class TestBadPrev(TestFileLoad):
     def _doc(self):
         return [
-                ("id", "JE02-2"),
-                ("name", "JE02"),
-                ("rev", 2),
-                ("prev", 3),
-                ("last", 4),
-                ("content", "i am JE02-2")
+                (_Schema.id.name, "JE02-2"),
+                (_Schema.name.name, "JE02"),
+                (_Schema.rev.name, 2),
+                (_Schema.prev.name, 3),
+                (_Schema.last.name, 4),
+                (_Schema.content.name, "i am JE02-2")
             ]
 
     def _assert(self):
@@ -273,12 +273,12 @@ class TestBadPrev(TestFileLoad):
 class TestBadLast(TestFileLoad):
     def _doc(self):
         return [
-                ("id", "JE04-2"),
-                ("name", "JE04"),
-                ("rev", 2),
-                ("prev", 0),
-                ("last", 1),
-                ("content", "i am JE04-2")
+                (_Schema.id.name, "JE04-2"),
+                (_Schema.name.name, "JE04"),
+                (_Schema.rev.name, 2),
+                (_Schema.prev.name, 0),
+                (_Schema.last.name, 1),
+                (_Schema.content.name, "i am JE04-2")
             ]
 
     def _assert(self):
@@ -290,12 +290,12 @@ class TestBadLast(TestFileLoad):
 class TestReverseFieldOrder(TestFileLoad):
     def _doc(self):
         return [
-                ("content", "i am JE00-4"),
-                ("last", 6),
-                ("prev", 0),
-                ("rev", 4),
-                ("name", "JE00"),
-                ("id", "JE00-4")
+                (_Schema.content.name, "i am JE00-4"),
+                (_Schema.last.name, 6),
+                (_Schema.prev.name, 0),
+                (_Schema.rev.name, 4),
+                (_Schema.name.name, "JE00"),
+                (_Schema.id.name, "JE00-4")
             ]
 
     def _assert(self):
@@ -308,12 +308,12 @@ class TestReverseFieldOrder(TestFileLoad):
 class TestNoSuchId(TestFileLoad):
     def _doc(self):
         return [
-                ("id", "JE04-4"),
-                ("name", "JE04"),
-                ("rev", 4),
-                ("prev", 3),
-                ("last", 4),
-                ("content", "i am JE04-4")
+                (_Schema.id.name, "JE04-4"),
+                (_Schema.name.name, "JE04"),
+                (_Schema.rev.name, 4),
+                (_Schema.prev.name, 3),
+                (_Schema.last.name, 4),
+                (_Schema.content.name, "i am JE04-4")
             ]
 
     def _assert(self):
