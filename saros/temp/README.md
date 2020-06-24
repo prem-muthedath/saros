@@ -1,5 +1,5 @@
-#### saros
+#### saros temp directory
 Placeholder for temp xml files created during program execution.
 
-THIS DIRECTORY IS REQUIRED FOR Saros APP, SO DO NOT REMOVE THIS DIRECTORY!!!
+** `temp` directory is required for Saros app, so DO NOT remove it!!! **
 
