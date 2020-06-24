@@ -5,7 +5,7 @@ import unittest
 from ..saros import Saros
 from ..database.database import _SarosDB, _Schema
 from ..xml import _File
-from ..error import (_FileSchemaError, _FileDataError, _NoSuchDocIdError,)
+from ..error import _FileSchemaError, _FileDataError, _NoSuchDocIdError
 from . import repo
 
 # test module -- contains all unit tests for saros application.
