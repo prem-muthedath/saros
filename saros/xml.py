@@ -48,7 +48,7 @@ class _Attribute:
 ################################################################################
 
 class _Xml:
-    # represents xml conetent of file named `ffname`
+    # represents xml content of file named `ffname`
     def __init__(self, ffname):
         # `ffname`: full file name = path + name + extn
         self.__ffname=ffname
@@ -161,7 +161,7 @@ class _File:
         self.__dir = "temp"     # directory containing the xml file
 
     def _write(self, doc):
-        # writes `doc` as an xml.  `doc` represents a document as an array of 
+        # writes `doc` as an xml.  `doc` represents a document as a list of 
         # attributes = [(name, val), ..., (name, val)]
         _Attributes([_Attribute(attr) for attr in doc])._write(self.__xml())
 
