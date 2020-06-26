@@ -182,7 +182,6 @@ class _File:
 
     def _link(self, prev, db):
         # link doc, represented by file's content, to previous revision `prev`
-        # self._write(self.__doc(_Schema.prev.name, prev))
         self._write(self.__doc(_Schema.prev.name, prev))
         db._load(self.__name)
 
