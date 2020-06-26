@@ -10,25 +10,6 @@ from .error import _FileSchemaError
 # (name, value) pairs & its XML element representation -- <name>value</name>
 ################################################################################
 
-class _Attributes:
-    # represents [_Attribute]
-    def __init__(self, attrs):
-        # `attrs` = [_Attribute]
-        self.__attrs=attrs
-
-    def _write(self, xml):
-        # writes it's xml representation to file.
-        xml._write(self.__to_xml())
-
-    def __to_xml(self):
-        # returns xml = ['<xml>', '<name>value</name>', ..., '</xml>']
-        # for `join()` trick, see /u/ RiaD @ https://tinyurl.com/y8ypjowj
-        elems=[each._to_xml() for each in self.__attrs]
-        xml='\n'.join([''] + elems + [''])
-        return _Attribute(('xml', xml))._to_xml().split('\n')
-
-################################################################################
-
 class _Attribute:
     # represents a (name, value) pair -- i.e., an xml attribute
     def __init__(self, (name, val)):
@@ -47,63 +28,22 @@ class _Attribute:
 
 ################################################################################
 
-class _Xml:
-    # represents xml content of file named `ffname`
-    def __init__(self, ffname):
-        # `ffname`: full file name = path + name + extn
-        self.__ffname=ffname
-
-    def _parse(self):
-        # parses xml file, returning document as a list of attributes.
-        # document attributes list = [(name, val), ..., (name, val)]
-        xml=[]
-        with open(self.__ffname, 'r') as reader:
-            xml=[line.rstrip() for line in reader]
-        return [_Element(i)._parse() for i in xml[1:-1]] # skip 'xml' hdr, ftr
+class _Attributes:
+    # represents [_Attribute]
+    def __init__(self, attrs):
+        # `attrs` = [_Attribute]
+        self.__attrs=attrs
 
     def _write(self, xml):
-        # writes `xml` to file named `self.__ffname`.
-        # `xml` = ['<xml>', '<name>value</name>', ..., '</xml>']
-        with open(self.__ffname, 'w') as writer:
-            for each in xml:
-                writer.write(each)
-                writer.write("\n")
+        # writes it's xml representation to file.
+        xml._write(self.__to_xml())
 
-    def _schema_map(self):
-        # constrained-checked schema map of xml.
-        # map: ord dict with `_Schema` members as keys.
-        doc=self.__map(self._parse())
-        _Schema._check(doc, self)
-        return doc
-
-    def __map(self, fdoc):
-        # maps `fdoc` -- parsed xml data -- to schema.
-        # returns an ord dict (i.e., the map) with `_Schema` members as keys.
-        # throws `_FileSchemaError` under schema violation.
-        doc=OrderedDict()
-        for col in _Schema:
-            positions=[i for i, (x, _) in enumerate(fdoc) if x==col.name]
-            if len(positions)==1:
-                doc[col]=fdoc.pop(positions[0])[1]
-            if len(positions) == 0:
-                hdr=self._hdr("schema column '"+ col.name + "' missing")
-                raise _FileSchemaError(hdr, col)
-            if len(positions) > 1:
-                hdr=self._hdr("schema column '"+ col.name + "' duplicated")
-                raise _FileSchemaError(hdr, col)
-            if type(doc[col]) != col._type:
-                typstr="data type != '" + col._type.__name__ + "'"
-                hdr=self._hdr("schema column '"+ col.name + "' " + typstr)
-                raise _FileSchemaError(hdr, col)
-            if col == list(_Schema)[-1] and len(fdoc) > 0:
-                rogues=", ".join([x for (x, _) in fdoc])
-                hdr=self._hdr("non-schema columns '" + rogues + "'")
-                raise _FileSchemaError(hdr, col)
-        return doc
-
-    def _hdr(self, errhdr):
-        # appends file name part to `errhdr` (i.e., error header)
-        return errhdr + " in '" + self.__ffname + "'"
+    def __to_xml(self):
+        # returns xml = ['<xml>', '<name>value</name>', ..., '</xml>']
+        # for `join()` trick, see /u/ RiaD @ https://tinyurl.com/y8ypjowj
+        elems=[each._to_xml() for each in self.__attrs]
+        xml='\n'.join([''] + elems + [''])
+        return _Attribute(('xml', xml))._to_xml().split('\n')
 
 ################################################################################
 
@@ -150,6 +90,66 @@ class _Element:
 
 ################################################################################
 
+class _Xml:
+    # represents xml content of file named `ffname`
+    def __init__(self, ffname):
+        # `ffname`: full file name = path + name + extn
+        self.__ffname=ffname
+
+    def _write(self, xml):
+        # writes `xml` to file named `self.__ffname`.
+        # `xml` = ['<xml>', '<name>value</name>', ..., '</xml>']
+        with open(self.__ffname, 'w') as writer:
+            for each in xml:
+                writer.write(each)
+                writer.write("\n")
+
+    def _parse(self):
+        # parses xml file, returning document as a list of attributes.
+        # document attributes list = [(name, val), ..., (name, val)]
+        xml=[]
+        with open(self.__ffname, 'r') as reader:
+            xml=[line.rstrip() for line in reader]
+        return [_Element(i)._parse() for i in xml[1:-1]] # skip 'xml' hdr, ftr
+
+    def _schema_map(self):
+        # constrained-checked schema map of xml.
+        # map: ord dict with `_Schema` members as keys.
+        doc=self.__map(self._parse())
+        _Schema._check(doc, self)
+        return doc
+
+    def __map(self, fdoc):
+        # maps `fdoc` -- parsed xml data -- to schema.
+        # returns an ord dict (i.e., the map) with `_Schema` members as keys.
+        # throws `_FileSchemaError` under schema violation.
+        doc=OrderedDict()
+        for col in _Schema:
+            positions=[i for i, (x, _) in enumerate(fdoc) if x==col.name]
+            if len(positions)==1:
+                doc[col]=fdoc.pop(positions[0])[1]
+            if len(positions) == 0:
+                hdr=self._hdr("schema column '"+ col.name + "' missing")
+                raise _FileSchemaError(hdr, col)
+            if len(positions) > 1:
+                hdr=self._hdr("schema column '"+ col.name + "' duplicated")
+                raise _FileSchemaError(hdr, col)
+            if type(doc[col]) != col._type:
+                typstr="data type != '" + col._type.__name__ + "'"
+                hdr=self._hdr("schema column '"+ col.name + "' " + typstr)
+                raise _FileSchemaError(hdr, col)
+            if col == list(_Schema)[-1] and len(fdoc) > 0:
+                rogues=", ".join([x for (x, _) in fdoc])
+                hdr=self._hdr("non-schema columns '" + rogues + "'")
+                raise _FileSchemaError(hdr, col)
+        return doc
+
+    def _hdr(self, errhdr):
+        # appends file name part to `errhdr` (i.e., error header)
+        return errhdr + " in '" + self.__ffname + "'"
+
+################################################################################
+
 class _File:
     # represents an xml file, one identified by a given name.
     # file holds a saros doc as an xml.
@@ -182,13 +182,14 @@ class _File:
 
     def _link(self, prev, db):
         # link doc, represented by file's content, to previous revision `prev`
+        # self._write(self.__doc(_Schema.prev.name, prev))
         self._write(self.__doc(_Schema.prev.name, prev))
         db._load(self.__name)
 
     def __doc(self, name, value):
         # returns `doc` info, i.e., `[(name, val)]`, updated with `value`.
-        xml=self.__xml()
-        return [(name, value) if i == name else (i, j) for (i, j) in xml._parse()]
+        doc=self.__xml()._parse()
+        return [(name, value) if i == name else (i, j) for (i, j) in doc]
 
     def _schema_map(self):
         # valid schema map (ord dict with schema items as keys) of contents.
