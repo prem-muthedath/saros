@@ -34,11 +34,7 @@ class _Attributes:
         # `attrs` = [_Attribute]
         self.__attrs=attrs
 
-    def _write(self, xml):
-        # writes it's xml representation to file.
-        xml._write(self.__to_xml())
-
-    def __to_xml(self):
+    def _to_xml(self):
         # returns xml = ['<xml>', '<name>value</name>', ..., '</xml>']
         # for `join()` trick, see /u/ RiaD @ https://tinyurl.com/y8ypjowj
         elems=[each._to_xml() for each in self.__attrs]
@@ -95,14 +91,6 @@ class _Xml:
     def __init__(self, ffname):
         # `ffname`: full file name = path + name + extn
         self.__ffname=ffname
-
-    def _write(self, xml):
-        # writes `xml` to file named `self.__ffname`.
-        # `xml` = ['<xml>', '<name>value</name>', ..., '</xml>']
-        with open(self.__ffname, 'w') as writer:
-            for each in xml:
-                writer.write(each)
-                writer.write("\n")
 
     def _parse(self):
         # parses xml file, returning document as a list of attributes.
@@ -163,7 +151,12 @@ class _File:
     def _write(self, doc):
         # writes `doc` as an xml.  `doc` represents a document as a list of 
         # attributes = [(name, val), ..., (name, val)]
-        _Attributes([_Attribute(attr) for attr in doc])._write(self.__xml())
+        # `xml` = ['<xml>', '<name>value</name>', ..., '</xml>']
+        xml=_Attributes([_Attribute(attr) for attr in doc])._to_xml()
+        with open(self.__full_name(), 'w') as writer:
+            for each in xml:
+                writer.write(each)
+                writer.write("\n")
 
     def __xml(self):
         # returns an instance of `_Xml`
